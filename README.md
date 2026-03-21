@@ -73,7 +73,18 @@ Integration tests for mail.tm hit the real API and may fail with 429 (rate limit
 
 ## AI Chatting (generic runners)
 
-The toolkit only ships **transport + loop helpers**: Groq chat, HTTP client for `/suggest`, and two runners. **Sales scripts, persona text, escalation reason names, and scenario assertions belong in your application** (see SSPanel `automation/integration/api/aiChattingScenarios/fixtures/`).
+**What lives in the package (no URLs, no product scripts):**
+
+| Piece | Role |
+|--------|------|
+| `GroqChatClient` | POST to Groq chat completions; you pass `apiKey` and prompts. |
+| `SuggestReplyClient` | POST to your backend `.../operator/conversations/:account/:user/suggest`; you pass `baseUrl`, headers, ids. |
+| `runHappyPath` | Loop: buyer message (Groq) → seller (`suggest`) until your `isSuccess(result)` returns true or `maxTurns`. |
+| `runDeviationScenarios` | For each static `history` + `assert(result)`, calls `suggest` once. |
+| `SuggestOverrides` | Optional JSON fields (`salesScript`, `persona`, …) merged into the suggest body. |
+| `hasEscalation` / `isReplyOnly` / `printTranscript` | Small helpers; escalation **reason strings** are defined by your app. |
+
+**What does *not* live here:** concrete seller persona, sales script text, “ready_to_buy” business rules, or any default API host — that stays in the consuming repo (e.g. SSPanel `automation/.../fixtures/`).
 
 ```typescript
 import {
@@ -86,9 +97,11 @@ import {
 } from '@sspanel/ss-toolkit';
 import type { SuggestOverrides, DeviationScenario } from '@sspanel/ss-toolkit';
 
+const apiOrigin = process.env.MY_API_BASE_URL!; // your app chooses staging/prod/dev
+
 const groqClient = new GroqChatClient({ apiKey: process.env.GROQ_API_KEY! });
 const suggestClient = new SuggestReplyClient({
-  baseUrl: 'http://localhost:3000',
+  baseUrl: apiOrigin,
   adminApiKey: process.env.ADMIN_API_KEY!,
   accountId: 'test-account',
   userId: 'test-user',
@@ -126,23 +139,19 @@ const devResults = await runDeviationScenarios({ suggestClient, scenarios, sugge
 ### Tests in this package
 
 - **Unit** (`src/__tests__/unit/ai-chatting/`) — pure assertion helpers, no network.
-- **Contract** (`src/__tests__/contract/ai-chatting/`) — smoke against real APIs when env is set; skipped otherwise.
+- **Contract** (`src/__tests__/contract/ai-chatting/`) — optional smoke; **skipped** unless you set env (`GROQ_API_KEY` / `SS_TOOLKIT_API_BASE_URL` / etc.). No API host or Groq key is committed in this repo.
 
 ```bash
-# Contract: Groq only (needs key)
-SS_TOOLKIT_GROQ_API_KEY=gsk_... npx jest modules/ss-toolkit/src/__tests__/contract/ai-chatting/groq --testTimeout=60000
+# Groq only
+npx jest modules/ss-toolkit/src/__tests__/contract/ai-chatting/groq --testTimeout=60000
 
-# Contract: backend /suggest only (set URL explicitly)
-SS_TOOLKIT_API_BASE_URL=http://localhost:3000 npx jest modules/ss-toolkit/src/__tests__/contract/ai-chatting/suggest-reply --testTimeout=120000
-
-# Contract: one full loop (needs both)
-SS_TOOLKIT_GROQ_API_KEY=gsk_... SS_TOOLKIT_API_BASE_URL=http://localhost:3000 \
-  npx jest modules/ss-toolkit/src/__tests__/contract/ai-chatting/runner --testTimeout=120000
+# /suggest + runner — export your backend origin first
+export SS_TOOLKIT_API_BASE_URL='https://your-api.example'
+npx jest modules/ss-toolkit/src/__tests__/contract/ai-chatting/suggest-reply --testTimeout=120000
+npx jest modules/ss-toolkit/src/__tests__/contract/ai-chatting/runner --testTimeout=120000
 ```
 
-`SS_TOOLKIT_API_BASE_URL` has **no default** in contract tests: export it when you intend to hit a server.
-
-Product-specific Polina scenarios run from the **SSPanel** repo (Jest + `automation/.../fixtures/polina-scenario.ts`), not from this package.
+Product-specific scenarios (scripts, assertions) run from the **SSPanel** repo, not from this package.
 
 ## Scenarios
 

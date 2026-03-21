@@ -1,12 +1,12 @@
 /**
- * Contract: backend /suggest returns structured JSON (real admin key + URL).
- * Skip when SS_TOOLKIT_API_BASE_URL is unset (do not default to localhost to avoid accidental hits).
+ * Contract: backend /suggest returns structured JSON.
+ * No default URL — set SS_TOOLKIT_API_BASE_URL or API_BASE_URL to your backend origin.
  */
 
 import { SuggestReplyClient } from '../../../ai-chatting/SuggestReplyClient';
 
-const baseUrl = process.env.SS_TOOLKIT_API_BASE_URL || '';
-const adminKey = process.env.SS_TOOLKIT_ADMIN_API_KEY || 'sk_admin_fixed_key_12345';
+const baseUrl = process.env.SS_TOOLKIT_API_BASE_URL || process.env.API_BASE_URL || '';
+const adminKey = process.env.SS_TOOLKIT_ADMIN_API_KEY || process.env.ADMIN_API_KEY || 'sk_admin_fixed_key_12345';
 
 const describeContract = baseUrl ? describe : describe.skip;
 

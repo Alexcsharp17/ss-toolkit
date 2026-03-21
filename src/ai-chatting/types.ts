@@ -29,7 +29,7 @@ export interface SuggestOverrides {
 }
 
 export interface AiChattingConfig {
-  /** Backend base URL, e.g. http://localhost:3000 */
+  /** Backend origin (scheme + host + optional port) — provided by the app, not defaulted here */
   apiBaseUrl: string;
   /** Admin API key for the /suggest endpoint */
   adminApiKey: string;

@@ -1,15 +1,15 @@
 /**
- * Contract: one buyer turn + one seller turn completes (real Groq + backend).
- * Skip when either SS_TOOLKIT_GROQ_API_KEY or SS_TOOLKIT_API_BASE_URL is missing.
+ * Contract: one buyer turn + one seller turn (Groq + your /suggest).
+ * Set SS_TOOLKIT_API_BASE_URL (or API_BASE_URL) and a Groq key via env — no defaults in library or tests.
  */
 
 import { GroqChatClient } from '../../../ai-chatting/GroqChatClient';
 import { SuggestReplyClient } from '../../../ai-chatting/SuggestReplyClient';
 import { runHappyPath } from '../../../ai-chatting/AiChattingRunner';
 
-const groqKey = process.env.SS_TOOLKIT_GROQ_API_KEY || '';
-const baseUrl = process.env.SS_TOOLKIT_API_BASE_URL || '';
-const adminKey = process.env.SS_TOOLKIT_ADMIN_API_KEY || 'sk_admin_fixed_key_12345';
+const groqKey = process.env.SS_TOOLKIT_GROQ_API_KEY || process.env.GROQ_API_KEY || '';
+const baseUrl = process.env.SS_TOOLKIT_API_BASE_URL || process.env.API_BASE_URL || '';
+const adminKey = process.env.SS_TOOLKIT_ADMIN_API_KEY || process.env.ADMIN_API_KEY || 'sk_admin_fixed_key_12345';
 
 const describeContract = groqKey && baseUrl ? describe : describe.skip;
 

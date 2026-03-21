@@ -1,11 +1,11 @@
 /**
- * Contract: Groq API returns non-empty completion (real key).
- * Skip when SS_TOOLKIT_GROQ_API_KEY is unset.
+ * Contract: Groq API returns non-empty completion.
+ * Set SS_TOOLKIT_GROQ_API_KEY or GROQ_API_KEY — no key string in repo (push protection).
  */
 
 import { GroqChatClient } from '../../../ai-chatting/GroqChatClient';
 
-const key = process.env.SS_TOOLKIT_GROQ_API_KEY || '';
+const key = process.env.SS_TOOLKIT_GROQ_API_KEY || process.env.GROQ_API_KEY || '';
 
 const describeContract = key ? describe : describe.skip;
 

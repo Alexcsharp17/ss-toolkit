@@ -1,4 +1,6 @@
 node_modules/
+# stray JS emitted next to .ts (never commit)
+src/**/*.js
 dist/
 build/
 coverage/
