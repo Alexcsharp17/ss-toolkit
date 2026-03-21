@@ -1,10 +1,10 @@
 import { GroqChatClient } from './GroqChatClient';
 import { SuggestReplyClient } from './SuggestReplyClient';
-import { isReadyToBuy, printTranscript } from './assertions';
+import { printTranscript } from './assertions';
 import type {
   HistoryMessage,
   SuggestReplyResult,
-  SellerPersonaConfig,
+  SuggestOverrides,
   HappyPathResult,
   DeviationScenario,
   DeviationRunResult,
@@ -14,7 +14,13 @@ export interface HappyPathOptions {
   groqClient: GroqChatClient;
   suggestClient: SuggestReplyClient;
   buyerSystemPrompt: string;
-  sellerPersona: SellerPersonaConfig;
+  /** Forwarded to POST /suggest (scripts, persona, channel overrides). */
+  suggestOverrides?: Partial<SuggestOverrides>;
+  /**
+   * Called after each seller turn. Return true to stop the loop with success.
+   * Domain rules (e.g. escalation reason names) belong in the app that passes this callback.
+   */
+  isSuccess: (result: SuggestReplyResult) => boolean;
   /** Maximum conversation turns before declaring failure (default 10) */
   maxTurns?: number;
   /** Delay in ms between turns to avoid rate limiting (default 8000) */
@@ -26,23 +32,23 @@ export interface HappyPathOptions {
 export interface DeviationRunOptions {
   suggestClient: SuggestReplyClient;
   scenarios: DeviationScenario[];
-  sellerPersona: SellerPersonaConfig;
+  suggestOverrides?: Partial<SuggestOverrides>;
   /** Delay in ms between scenarios to avoid rate limiting (default 6000) */
   scenarioDelayMs?: number;
   verbose?: boolean;
 }
 
 /**
- * Runs the happy-path "buyer AI vs seller AI" scenario:
- * the buyer AI (Groq) sends messages, the seller AI (backend /suggest) responds.
- * Succeeds when the seller escalates with reason=ready_to_buy within maxTurns.
+ * Runs a multi-turn loop: buyer AI (Groq) speaks, seller (backend /suggest) responds.
+ * Stops successfully when `isSuccess(lastSellerResult)` is true, or fails after `maxTurns`.
  */
 export async function runHappyPath(options: HappyPathOptions): Promise<HappyPathResult> {
   const {
     groqClient,
     suggestClient,
     buyerSystemPrompt,
-    sellerPersona,
+    suggestOverrides,
+    isSuccess,
     maxTurns = 10,
     turnDelayMs = 8_000,
     verbose = false,
@@ -62,7 +68,7 @@ export async function runHappyPath(options: HappyPathOptions): Promise<HappyPath
     if (verbose) console.log(`  👤 Покупатель: ${buyerMessage}`);
     history.push({ text: buyerMessage, out: false });
 
-    const result = await suggestClient.suggest(history, sellerPersona);
+    const result = await suggestClient.suggest(history, suggestOverrides);
     lastResult = result;
 
     if (verbose) {
@@ -72,7 +78,7 @@ export async function runHappyPath(options: HappyPathOptions): Promise<HappyPath
       console.log(`  🤖 Продавец: ${result.suggestedText}  [${tag}]`);
     }
 
-    if (isReadyToBuy(result)) {
+    if (isSuccess(result)) {
       history.push({ text: result.suggestedText, out: true });
       if (verbose) printTranscript(history, result);
       return { success: true, turns: turn, history, lastResult: result };
@@ -90,7 +96,7 @@ export async function runHappyPath(options: HappyPathOptions): Promise<HappyPath
  * Each scenario sends a pre-built history and asserts the response matches expectations.
  */
 export async function runDeviationScenarios(options: DeviationRunOptions): Promise<DeviationRunResult[]> {
-  const { suggestClient, scenarios, sellerPersona, scenarioDelayMs = 6_000, verbose = false } =
+  const { suggestClient, scenarios, suggestOverrides, scenarioDelayMs = 6_000, verbose = false } =
     options;
 
   const results: DeviationRunResult[] = [];
@@ -102,7 +108,7 @@ export async function runDeviationScenarios(options: DeviationRunOptions): Promi
     if (verbose) console.log(`── ${scenario.name} ──`);
 
     try {
-      const result = await suggestClient.suggest(scenario.history, sellerPersona);
+      const result = await suggestClient.suggest(scenario.history, suggestOverrides);
       const tag = result.escalation
         ? `${result.action} · ${result.escalation.reason}`
         : result.action;

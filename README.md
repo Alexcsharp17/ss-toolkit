@@ -71,9 +71,9 @@ npm test ss-toolkit/src/__tests__/integration  # integration only (mail.tm)
 
 Integration tests for mail.tm hit the real API and may fail with 429 (rate limit) if run too frequently. Retry with delay is built in.
 
-## AI Chatting Scenarios
+## AI Chatting (generic runners)
 
-Tools for testing the backend `/suggest` endpoint by simulating a conversation between a buyer AI (Groq) and a seller AI (your backend).
+The toolkit only ships **transport + loop helpers**: Groq chat, HTTP client for `/suggest`, and two runners. **Sales scripts, persona text, escalation reason names, and scenario assertions belong in your application** (see SSPanel `automation/integration/api/aiChattingScenarios/fixtures/`).
 
 ```typescript
 import {
@@ -84,7 +84,7 @@ import {
   hasEscalation,
   isReplyOnly,
 } from '@sspanel/ss-toolkit';
-import type { SellerPersonaConfig, DeviationScenario } from '@sspanel/ss-toolkit';
+import type { SuggestOverrides, DeviationScenario } from '@sspanel/ss-toolkit';
 
 const groqClient = new GroqChatClient({ apiKey: process.env.GROQ_API_KEY! });
 const suggestClient = new SuggestReplyClient({
@@ -94,55 +94,55 @@ const suggestClient = new SuggestReplyClient({
   userId: 'test-user',
 });
 
-const persona: SellerPersonaConfig = { /* ... */ };
+const overrides: SuggestOverrides = {
+  salesScript: ['...'],
+  persona: '...',
+  channelDescription: '...',
+  channelFirstPost: '...',
+};
 
-// Happy-path: buyer AI sends messages, seller AI responds until ready_to_buy
 const result = await runHappyPath({
   groqClient,
   suggestClient,
   buyerSystemPrompt: '...',
-  sellerPersona: persona,
+  suggestOverrides: overrides,
+  isSuccess: (r) =>
+    (r.action === 'reply_and_escalate' || r.action === 'escalate') &&
+    r.escalation?.reason === 'ready_to_buy',
   maxTurns: 10,
   verbose: true,
 });
-console.log(result.success, result.turns);
 
-// Deviation scenarios: static histories with custom assertions
 const scenarios: DeviationScenario[] = [
   {
-    name: 'Offensive — insults',
-    history: [{ text: 'Иди нахер', out: false }],
-    assert: (r) => (hasEscalation(r, 'offensive') || r.action === 'ignore' ? null : 'Expected offensive escalation'),
+    name: 'example',
+    history: [{ text: 'Hi', out: false }],
+    assert: (r) => (hasEscalation(r, 'offensive') ? null : 'expected offensive'),
   },
 ];
-const devResults = await runDeviationScenarios({ suggestClient, scenarios, sellerPersona: persona });
-console.log(devResults.filter((r) => !r.passed));
+const devResults = await runDeviationScenarios({ suggestClient, scenarios, suggestOverrides: overrides });
 ```
 
-### Integration tests (AI Chatting)
+### Tests in this package
+
+- **Unit** (`src/__tests__/unit/ai-chatting/`) — pure assertion helpers, no network.
+- **Contract** (`src/__tests__/contract/ai-chatting/`) — smoke against real APIs when env is set; skipped otherwise.
 
 ```bash
-# Happy-path + deviation tests (requires running backend + Groq key):
-SS_TOOLKIT_API_BASE_URL=http://localhost:3000 \
-SS_TOOLKIT_GROQ_API_KEY=gsk_... \
-SS_TOOLKIT_ADMIN_API_KEY=sk_admin_... \
-npx jest --testPathPattern=ai-chatting --testTimeout=150000
+# Contract: Groq only (needs key)
+SS_TOOLKIT_GROQ_API_KEY=gsk_... npx jest modules/ss-toolkit/src/__tests__/contract/ai-chatting/groq --testTimeout=60000
 
-# Deviation-only (no Groq key needed — no live buyer AI):
-SS_TOOLKIT_API_BASE_URL=http://localhost:3000 \
-SS_TOOLKIT_ADMIN_API_KEY=sk_admin_... \
-npx jest --testPathPattern=ai-chatting --testTimeout=150000
+# Contract: backend /suggest only (set URL explicitly)
+SS_TOOLKIT_API_BASE_URL=http://localhost:3000 npx jest modules/ss-toolkit/src/__tests__/contract/ai-chatting/suggest-reply --testTimeout=120000
+
+# Contract: one full loop (needs both)
+SS_TOOLKIT_GROQ_API_KEY=gsk_... SS_TOOLKIT_API_BASE_URL=http://localhost:3000 \
+  npx jest modules/ss-toolkit/src/__tests__/contract/ai-chatting/runner --testTimeout=120000
 ```
 
-**Environment variables:**
+`SS_TOOLKIT_API_BASE_URL` has **no default** in contract tests: export it when you intend to hit a server.
 
-| Variable | Required for | Description |
-|---|---|---|
-| `SS_TOOLKIT_API_BASE_URL` | both | Backend base URL |
-| `SS_TOOLKIT_GROQ_API_KEY` | happy-path only | Groq key for the buyer AI |
-| `SS_TOOLKIT_ADMIN_API_KEY` | both | Admin key for `/suggest` endpoint |
-
-Without `SS_TOOLKIT_API_BASE_URL` both test suites skip. Without `SS_TOOLKIT_GROQ_API_KEY` only the happy-path suite skips; deviation tests still run.
+Product-specific Polina scenarios run from the **SSPanel** repo (Jest + `automation/.../fixtures/polina-scenario.ts`), not from this package.
 
 ## Scenarios
 

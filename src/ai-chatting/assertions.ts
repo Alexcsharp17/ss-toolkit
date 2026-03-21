@@ -13,11 +13,6 @@ export function isReplyOnly(result: SuggestReplyResult): boolean {
   return result.action === 'reply' || result.action === 'ignore';
 }
 
-/** Returns true when the result signals the buyer is ready to purchase. */
-export function isReadyToBuy(result: SuggestReplyResult): boolean {
-  return hasEscalation(result, 'ready_to_buy');
-}
-
 /**
  * Prints a full conversation transcript to stdout.
  * Useful for debugging failing scenarios.

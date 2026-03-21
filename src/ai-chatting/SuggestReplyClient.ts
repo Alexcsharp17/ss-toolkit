@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { HistoryMessage, SuggestReplyResult, SellerPersonaConfig } from './types';
+import type { HistoryMessage, SuggestReplyResult, SuggestOverrides } from './types';
 
 export interface SuggestReplyClientOptions {
   baseUrl: string;
@@ -22,21 +22,21 @@ export class SuggestReplyClient {
 
   /**
    * Calls POST /api/v2/operator/conversations/:account/:user/suggest with the given
-   * message history and optional persona overrides.
+   * message history and optional body overrides (sales script, persona, channel text).
    * Retries on 429 / 500+429 up to 3 times.
    */
   async suggest(
     history: HistoryMessage[],
-    persona?: Partial<SellerPersonaConfig>,
+    overrides?: Partial<SuggestOverrides>,
   ): Promise<SuggestReplyResult> {
     const { baseUrl, adminApiKey, accountId, userId, timeoutMs } = this.options;
     const url = `${baseUrl}/api/v2/operator/conversations/${encodeURIComponent(accountId)}/${encodeURIComponent(userId)}/suggest`;
 
     const body: Record<string, unknown> = { messages: history };
-    if (persona?.salesScript) body.salesScriptOverride = persona.salesScript;
-    if (persona?.persona) body.personaOverride = persona.persona;
-    if (persona?.channelDescription) body.channelDescriptionOverride = persona.channelDescription;
-    if (persona?.channelFirstPost) body.channelFirstPostOverride = persona.channelFirstPost;
+    if (overrides?.salesScript) body.salesScriptOverride = overrides.salesScript;
+    if (overrides?.persona) body.personaOverride = overrides.persona;
+    if (overrides?.channelDescription) body.channelDescriptionOverride = overrides.channelDescription;
+    if (overrides?.channelFirstPost) body.channelFirstPostOverride = overrides.channelFirstPost;
 
     for (let attempt = 0; attempt < 3; attempt++) {
       try {

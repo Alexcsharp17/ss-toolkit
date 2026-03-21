@@ -17,11 +17,15 @@ export interface SuggestReplyResult {
   escalation?: SuggestReplyEscalation;
 }
 
-export interface SellerPersonaConfig {
-  salesScript: string[];
-  persona: string;
-  channelDescription: string;
-  channelFirstPost: string;
+/**
+ * Optional fields forwarded to POST /suggest as *Override keys.
+ * Domain-specific scripts/personas live in the consuming app, not in the toolkit.
+ */
+export interface SuggestOverrides {
+  salesScript?: string[];
+  persona?: string;
+  channelDescription?: string;
+  channelFirstPost?: string;
 }
 
 export interface AiChattingConfig {

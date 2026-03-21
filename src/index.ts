@@ -48,8 +48,8 @@ export type { GroqScenarioResult } from './scenarios/api-key-retrieval/groq';
 export type { GroqScenarioConfig } from './scenarios/api-key-retrieval/groq/config';
 
 // AI Chatting
-export { GroqChatClient, SuggestReplyClient, runHappyPath, runDeviationScenarios, hasEscalation, isReplyOnly, isReadyToBuy, printTranscript } from './ai-chatting';
-export type { HistoryMessage, SuggestReplyResult, SuggestReplyEscalation, SellerPersonaConfig, AiChattingConfig, DeviationScenario, HappyPathResult, DeviationRunResult, GroqChatClientOptions, SuggestReplyClientOptions, HappyPathOptions, DeviationRunOptions } from './ai-chatting';
+export { GroqChatClient, SuggestReplyClient, runHappyPath, runDeviationScenarios, hasEscalation, isReplyOnly, printTranscript } from './ai-chatting';
+export type { HistoryMessage, SuggestReplyResult, SuggestReplyEscalation, SuggestOverrides, AiChattingConfig, DeviationScenario, HappyPathResult, DeviationRunResult, GroqChatClientOptions, SuggestReplyClientOptions, HappyPathOptions, DeviationRunOptions } from './ai-chatting';
 
 // Core
 export { RoundRobinSelector } from './core/loadbalancer/RoundRobinSelector';
