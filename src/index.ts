@@ -47,6 +47,30 @@ export { GroqApiKeyScenario } from './scenarios/api-key-retrieval/groq';
 export type { GroqScenarioResult } from './scenarios/api-key-retrieval/groq';
 export type { GroqScenarioConfig } from './scenarios/api-key-retrieval/groq/config';
 
+// Telegram Bot API
+export { TelegramBotApiClient } from './telegram/bot-api';
+export type { TelegramBotApiClientOptions } from './telegram/bot-api';
+export type {
+  TelegramUser,
+  TelegramChat,
+  TelegramMessage,
+  TelegramUpdate,
+  TelegramApiResponse,
+  BotInfo,
+  SendMessageResult,
+} from './telegram/bot-api';
+export { runEchoBotLoop, startEchoBot } from './telegram/echo/runEchoBotLoop';
+export type { RunEchoBotLoopOptions, EchoHandlerOptions } from './telegram/echo/runEchoBotLoop';
+export { checkBotApiHealth } from './telegram/health/checkBot';
+export type { BotHealthResult } from './telegram/health/checkBot';
+export { BotDialogScriptRunner, runBotDialogScript } from './telegram/script';
+export type {
+  ScriptStep,
+  BotDialogScriptRunnerOptions,
+  ScriptStepResult,
+  BotDialogScriptResult,
+} from './telegram/script';
+
 // Core
 export { RoundRobinSelector } from './core/loadbalancer/RoundRobinSelector';
 export type { IProviderSelector } from './core/loadbalancer/IProviderSelector';

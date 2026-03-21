@@ -71,6 +71,65 @@ npm test ss-toolkit/src/__tests__/integration  # integration only (mail.tm)
 
 Integration tests for mail.tm hit the real API and may fail with 429 (rate limit) if run too frequently. Retry with delay is built in.
 
+## Telegram Bot API
+
+Lightweight wrapper over Telegram Bot API (no external dependencies, uses built-in `fetch`).
+
+```typescript
+import {
+  TelegramBotApiClient,
+  runEchoBotLoop,
+  checkBotApiHealth,
+  runBotDialogScript,
+} from '@sspanel/ss-toolkit';
+
+// Health check
+const client = new TelegramBotApiClient({ token: process.env.BOT_TOKEN! });
+const health = await checkBotApiHealth(client);
+console.log(health.bot?.username, health.pendingUpdates);
+
+// Echo bot loop (long polling, runs until signal aborted)
+const controller = new AbortController();
+await runEchoBotLoop({ client, signal: controller.signal });
+
+// Scripted two-bot dialog
+const actorClient = new TelegramBotApiClient({ token: process.env.ACTOR_BOT_TOKEN! });
+const targetBotInfo = await new TelegramBotApiClient({ token: process.env.TARGET_BOT_TOKEN! }).getMe();
+
+const result = await runBotDialogScript({
+  actorClient,
+  targetBotId: targetBotInfo.result!.id,
+  steps: [
+    { sendText: '/start', expectSubstring: 'Hi', timeoutMs: 10_000 },
+    { sendText: 'hello', expectSubstring: 'hello', timeoutMs: 10_000 },
+  ],
+});
+console.log(result.success, result.steps);
+```
+
+### Integration tests (Telegram)
+
+Two bots are required. The **target** bot must already be running and replying before the test runs (e.g. with `startEchoBot`).
+
+```bash
+# Terminal 1 — start echo (target) bot:
+TARGET_BOT_TOKEN=<token> npx tsx automation/scripts/telegram-bot-echo.ts
+
+# Terminal 2 — run Telegram integration tests:
+SS_TOOLKIT_TELEGRAM_ACTOR_BOT_TOKEN=<token> \
+SS_TOOLKIT_TELEGRAM_TARGET_BOT_TOKEN=<token> \
+npx jest --testPathPattern=telegram --testTimeout=120000
+```
+
+**Environment variables:**
+
+| Variable | Required for | Description |
+|---|---|---|
+| `SS_TOOLKIT_TELEGRAM_ACTOR_BOT_TOKEN` | two-bot test | Token for the actor bot (sends messages, polls replies) |
+| `SS_TOOLKIT_TELEGRAM_TARGET_BOT_TOKEN` | two-bot test | Token for the target (echo) bot |
+
+Without these variables the two-bot `describe` is skipped automatically. Health-only tests also skip if no token is set.
+
 ## Scenarios
 
 Pre-built automation scenarios:
