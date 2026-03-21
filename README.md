@@ -71,64 +71,78 @@ npm test ss-toolkit/src/__tests__/integration  # integration only (mail.tm)
 
 Integration tests for mail.tm hit the real API and may fail with 429 (rate limit) if run too frequently. Retry with delay is built in.
 
-## Telegram Bot API
+## AI Chatting Scenarios
 
-Lightweight wrapper over Telegram Bot API (no external dependencies, uses built-in `fetch`).
+Tools for testing the backend `/suggest` endpoint by simulating a conversation between a buyer AI (Groq) and a seller AI (your backend).
 
 ```typescript
 import {
-  TelegramBotApiClient,
-  runEchoBotLoop,
-  checkBotApiHealth,
-  runBotDialogScript,
+  GroqChatClient,
+  SuggestReplyClient,
+  runHappyPath,
+  runDeviationScenarios,
+  hasEscalation,
+  isReplyOnly,
 } from '@sspanel/ss-toolkit';
+import type { SellerPersonaConfig, DeviationScenario } from '@sspanel/ss-toolkit';
 
-// Health check
-const client = new TelegramBotApiClient({ token: process.env.BOT_TOKEN! });
-const health = await checkBotApiHealth(client);
-console.log(health.bot?.username, health.pendingUpdates);
-
-// Echo bot loop (long polling, runs until signal aborted)
-const controller = new AbortController();
-await runEchoBotLoop({ client, signal: controller.signal });
-
-// Scripted two-bot dialog
-const actorClient = new TelegramBotApiClient({ token: process.env.ACTOR_BOT_TOKEN! });
-const targetBotInfo = await new TelegramBotApiClient({ token: process.env.TARGET_BOT_TOKEN! }).getMe();
-
-const result = await runBotDialogScript({
-  actorClient,
-  targetBotId: targetBotInfo.result!.id,
-  steps: [
-    { sendText: '/start', expectSubstring: 'Hi', timeoutMs: 10_000 },
-    { sendText: 'hello', expectSubstring: 'hello', timeoutMs: 10_000 },
-  ],
+const groqClient = new GroqChatClient({ apiKey: process.env.GROQ_API_KEY! });
+const suggestClient = new SuggestReplyClient({
+  baseUrl: 'http://localhost:3000',
+  adminApiKey: process.env.ADMIN_API_KEY!,
+  accountId: 'test-account',
+  userId: 'test-user',
 });
-console.log(result.success, result.steps);
+
+const persona: SellerPersonaConfig = { /* ... */ };
+
+// Happy-path: buyer AI sends messages, seller AI responds until ready_to_buy
+const result = await runHappyPath({
+  groqClient,
+  suggestClient,
+  buyerSystemPrompt: '...',
+  sellerPersona: persona,
+  maxTurns: 10,
+  verbose: true,
+});
+console.log(result.success, result.turns);
+
+// Deviation scenarios: static histories with custom assertions
+const scenarios: DeviationScenario[] = [
+  {
+    name: 'Offensive — insults',
+    history: [{ text: 'Иди нахер', out: false }],
+    assert: (r) => (hasEscalation(r, 'offensive') || r.action === 'ignore' ? null : 'Expected offensive escalation'),
+  },
+];
+const devResults = await runDeviationScenarios({ suggestClient, scenarios, sellerPersona: persona });
+console.log(devResults.filter((r) => !r.passed));
 ```
 
-### Integration tests (Telegram)
-
-Two bots are required. The **target** bot must already be running and replying before the test runs (e.g. with `startEchoBot`).
+### Integration tests (AI Chatting)
 
 ```bash
-# Terminal 1 — start echo (target) bot:
-TARGET_BOT_TOKEN=<token> npx tsx automation/scripts/telegram-bot-echo.ts
+# Happy-path + deviation tests (requires running backend + Groq key):
+SS_TOOLKIT_API_BASE_URL=http://localhost:3000 \
+SS_TOOLKIT_GROQ_API_KEY=gsk_... \
+SS_TOOLKIT_ADMIN_API_KEY=sk_admin_... \
+npx jest --testPathPattern=ai-chatting --testTimeout=150000
 
-# Terminal 2 — run Telegram integration tests:
-SS_TOOLKIT_TELEGRAM_ACTOR_BOT_TOKEN=<token> \
-SS_TOOLKIT_TELEGRAM_TARGET_BOT_TOKEN=<token> \
-npx jest --testPathPattern=telegram --testTimeout=120000
+# Deviation-only (no Groq key needed — no live buyer AI):
+SS_TOOLKIT_API_BASE_URL=http://localhost:3000 \
+SS_TOOLKIT_ADMIN_API_KEY=sk_admin_... \
+npx jest --testPathPattern=ai-chatting --testTimeout=150000
 ```
 
 **Environment variables:**
 
 | Variable | Required for | Description |
 |---|---|---|
-| `SS_TOOLKIT_TELEGRAM_ACTOR_BOT_TOKEN` | two-bot test | Token for the actor bot (sends messages, polls replies) |
-| `SS_TOOLKIT_TELEGRAM_TARGET_BOT_TOKEN` | two-bot test | Token for the target (echo) bot |
+| `SS_TOOLKIT_API_BASE_URL` | both | Backend base URL |
+| `SS_TOOLKIT_GROQ_API_KEY` | happy-path only | Groq key for the buyer AI |
+| `SS_TOOLKIT_ADMIN_API_KEY` | both | Admin key for `/suggest` endpoint |
 
-Without these variables the two-bot `describe` is skipped automatically. Health-only tests also skip if no token is set.
+Without `SS_TOOLKIT_API_BASE_URL` both test suites skip. Without `SS_TOOLKIT_GROQ_API_KEY` only the happy-path suite skips; deviation tests still run.
 
 ## Scenarios
 
