@@ -5,7 +5,22 @@
   "license": "MIT",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./shared-types": {
+      "types": "./dist/shared-types/index.d.ts",
+      "default": "./dist/shared-types/index.js"
+    },
+    "./platform": {
+      "types": "./dist/platform/index.d.ts",
+      "default": "./dist/platform/index.js"
+    }
+  },
   "scripts": {
+    "prepare": "npm run build",
     "build": "tsc",
     "test": "jest",
     "groq:scenario": "tsx src/scenarios/api-key-retrieval/groq/run.ts"

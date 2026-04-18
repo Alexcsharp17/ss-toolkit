@@ -58,3 +58,27 @@ export { SimpleRetryPolicy } from './core/retry/RetryPolicy';
 export type { RetryPolicy, RetryPolicyOptions } from './core/retry/RetryPolicy';
 export { SimpleCache } from './core/cache/SimpleCache';
 export type { SimpleCacheOptions } from './core/cache/SimpleCache';
+
+// Panel shared types + platform adapters (merged from former ss-adapters)
+export type {
+  PanelJobConfig,
+  PanelJobKind,
+  WarmupPanelJobConfig,
+  WarmupJoinGroupsMode,
+  WarmupReadChannelsMode,
+  MembersScrapingPanelJobConfig,
+  PanelJobConfigBase,
+} from './shared-types';
+export {
+  PANEL_JOB_KIND_TG_WARMUP,
+  PANEL_JOB_KIND_TG_PARSER,
+  PANEL_JOB_KIND_TG_CHATTING,
+} from './shared-types';
+export type {
+  IPlatformAdapter,
+  PlatformCode,
+  ProfileExecutionContext,
+  ProfilePatch,
+  ProfileResult,
+} from './platform';
+export { AdapterRegistry } from './platform';

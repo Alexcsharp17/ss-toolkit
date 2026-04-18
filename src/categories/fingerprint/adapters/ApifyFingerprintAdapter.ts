@@ -32,7 +32,7 @@ export class ApifyFingerprintAdapter implements IFingerprintGenerator {
       operatingSystems: fingerprintOptions.operatingSystems ?? ['windows'],
       browsers: fingerprintOptions.browsers,
       locales: fingerprintOptions.locales,
-    }) as { fingerprint?: ApifyFingerprintNative; fingerprintBase64?: string };
+    } as Parameters<typeof generator.getFingerprint>[0]) as { fingerprint?: ApifyFingerprintNative; fingerprintBase64?: string };
 
     const fingerprint = result?.fingerprint ?? (result as unknown as ApifyFingerprintNative);
     return toFingerprint(fingerprint, {
@@ -52,7 +52,7 @@ export class ApifyFingerprintAdapter implements IFingerprintGenerator {
         operatingSystems: fingerprintOptions.operatingSystems ?? ['windows'],
         browsers: fingerprintOptions.browsers,
         locales: fingerprintOptions.locales,
-      },
+      } as Record<string, unknown>,
     });
 
     return context;
