@@ -8,14 +8,20 @@
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.js",
       "default": "./dist/index.js"
     },
     "./shared-types": {
       "types": "./dist/shared-types/index.d.ts",
+      "import": "./dist/shared-types/index.js",
+      "require": "./dist/shared-types/index.js",
       "default": "./dist/shared-types/index.js"
     },
     "./platform": {
       "types": "./dist/platform/index.d.ts",
+      "import": "./dist/platform/index.js",
+      "require": "./dist/platform/index.js",
       "default": "./dist/platform/index.js"
     }
   },
