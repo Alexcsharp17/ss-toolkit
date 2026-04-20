@@ -27,6 +27,7 @@
   },
   "scripts": {
     "prepare": "npm run build",
+    "prebuild": "node scripts/clean-shared-types-js.cjs",
     "build": "tsc",
     "test": "jest",
     "groq:scenario": "tsx src/scenarios/api-key-retrieval/groq/run.ts"
