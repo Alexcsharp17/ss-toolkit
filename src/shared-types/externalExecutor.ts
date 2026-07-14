@@ -332,6 +332,11 @@ export interface ExternalExecutorAccountSelector {
   constraints?: Record<string, unknown>;
 }
 
+export interface ExternalExecutorAccountDeleteResponse {
+  executorAccountId: string;
+  deleted: boolean;
+}
+
 export interface ExternalExecutorActivityWindow {
   from: string;
   to: string;

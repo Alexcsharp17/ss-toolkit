@@ -86,6 +86,7 @@ export {
 } from './shared-types';
 export type {
   ExternalExecutorAccountSelector,
+  ExternalExecutorAccountDeleteResponse,
   ExternalExecutorActionLimit,
   ExternalExecutorActivityWindow,
   ExternalExecutorJobProgressResponse,

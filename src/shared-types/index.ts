@@ -26,6 +26,7 @@ export {
 } from './externalExecutor';
 export type {
   ExternalExecutorAccountSelector,
+  ExternalExecutorAccountDeleteResponse,
   ExternalExecutorActionLimit,
   ExternalExecutorActivityWindow,
   ExternalExecutorJobProgressResponse,
