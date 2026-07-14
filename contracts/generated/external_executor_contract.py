@@ -4,6 +4,7 @@ from typing import Literal, TypedDict
 
 CONTRACT_VERSIONS = (
     "1.0",
+    "1.1",
 )
 
 MODULE_FEATURES = (
@@ -130,6 +131,7 @@ class JobProgressResponse(TypedDict, total=False):
 
 __all__ = [
     'CONTRACT_VERSIONS',
+    'MODULE_FEATURES',
     'PLATFORMS',
     'JOB_STATUSES',
     'EVENT_TYPES',

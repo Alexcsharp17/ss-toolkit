@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sspanel.dev/contracts/external-executor/1.0/schema.json",
+  "$id": "https://sspanel.dev/contracts/external-executor/1.1/schema.json",
   "title": "SS-panel external executor contract",
   "description": "Canonical wire contract for SS-panel managed social modules.",
   "type": "object",
@@ -18,7 +18,7 @@
   "properties": {
     "contractVersions": {
       "type": "array",
-      "items": { "type": "string", "enum": ["1.0"] },
+      "items": { "type": "string", "enum": ["1.0", "1.1"] },
       "minItems": 1,
       "uniqueItems": true
     },
@@ -252,7 +252,7 @@
       "additionalProperties": false,
       "required": ["contractVersion", "moduleId", "event"],
       "properties": {
-        "contractVersion": { "const": "1.0" },
+        "contractVersion": { "type": "string", "enum": ["1.0", "1.1"] },
         "moduleId": { "type": "string", "minLength": 1 },
         "event": { "$ref": "#/$defs/actionEvent" }
       }

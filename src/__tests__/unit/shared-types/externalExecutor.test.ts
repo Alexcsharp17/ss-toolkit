@@ -25,7 +25,7 @@ describe('external executor shared types', () => {
     ]);
     expect(INSTAGRAM_EXECUTOR_ACTION_TYPES).toContain('instagram.comments.reply');
     expect(INSTAGRAM_EXECUTOR_ACTION_TYPES).toContain('instagram.account.health');
-    expect(EXTERNAL_MODULE_CONTRACT_VERSIONS).toEqual(['1.0']);
+    expect(EXTERNAL_MODULE_CONTRACT_VERSIONS).toEqual(['1.0', '1.1']);
     expect(EXTERNAL_MODULE_FEATURES).toEqual([
       'callbacks.v1',
       'event-sequence.v1',

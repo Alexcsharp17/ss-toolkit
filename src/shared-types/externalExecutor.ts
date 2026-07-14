@@ -3,7 +3,7 @@ import type { ContentCommentCandidate, ContentCommentDecision } from './content'
 export const EXTERNAL_EXECUTOR_PLATFORMS = ['instagram'] as const;
 export type ExternalExecutorPlatform = typeof EXTERNAL_EXECUTOR_PLATFORMS[number];
 
-export const EXTERNAL_MODULE_CONTRACT_VERSIONS = ['1.0'] as const;
+export const EXTERNAL_MODULE_CONTRACT_VERSIONS = ['1.0', '1.1'] as const;
 export type ExternalModuleContractVersion = typeof EXTERNAL_MODULE_CONTRACT_VERSIONS[number];
 
 export const EXTERNAL_MODULE_FEATURES = [
