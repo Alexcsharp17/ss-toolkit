@@ -43,6 +43,13 @@ schema:
 node scripts/generate_external_executor_sdk.mjs
 ```
 
+Black-box protocol checks are available at
+`contracts/conformance/python/sspanel_module_conformance.py`. Copy that file
+into a module repository or import it from the toolkit checkout and run
+`assert_sspanel_module_conformance` against an async HTTP client. The runner
+checks authentication, health, manifest, capability rejection, idempotent
+start, and polling without calling a live provider account.
+
 The starter is a REST microservice baseline, not a gateway. It demonstrates
 authentication, health, manifest, idempotent jobs, SQLite persistence, and a
 conformance test while leaving platform-specific workflows to the module

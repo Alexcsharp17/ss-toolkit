@@ -98,10 +98,21 @@ ExternalExecutorEventType = Literal["job.accepted", "job.started", "job.progress
 InstagramExecutorActionType = Literal["instagram.account.health", "instagram.profile.get", "instagram.media.upload.photo", "instagram.media.upload.video", "instagram.media.upload.reel", "instagram.story.upload", "instagram.comments.list", "instagram.warmup", "instagram.comments.reply", "instagram.comments.smart_reply", "instagram.comments.delete", "instagram.comments.pin", "instagram.dm.inbox", "instagram.dm.send", "instagram.dm.reply", "instagram.insights.basic"]
 
 
-class AccountSelector(TypedDict, total=False):
+class ExternalExecutorAccountSelector(TypedDict, total=False):
     mode: Literal['system', 'specific']
     accountIds: list[str]
     constraints: dict[str, object]
+
+
+class ExternalExecutorPolicyEnvelope(TypedDict, total=False):
+    policyVersion: str
+    activityWindows: list[dict[str, str]]
+    actionLimits: dict[str, dict[str, int]]
+    durationMinutes: int
+    progressiveLimits: dict[str, object]
+    riskProfile: Literal['safe', 'standard', 'fast']
+    scenarioRef: str
+    targetPolicy: dict[str, object]
 
 
 class JobStartRequest(TypedDict, total=False):
@@ -110,10 +121,59 @@ class JobStartRequest(TypedDict, total=False):
     platform: ExternalExecutorPlatform
     actionType: InstagramExecutorActionType
     quantity: int
-    accountSelector: AccountSelector
+    accountSelector: ExternalExecutorAccountSelector
     payload: dict[str, object]
-    policyEnvelope: dict[str, object]
+    policyEnvelope: ExternalExecutorPolicyEnvelope
     callbackUrl: str
+
+
+class JobStartResponse(TypedDict):
+    jobId: str
+    status: ExternalExecutorJobStatus
+    acceptedAt: str
+
+
+class ExternalExecutorUsageEvent(TypedDict, total=False):
+    metric: str
+    amount: float
+    unit: str
+    window: str
+
+
+class ExternalExecutorActionEvent(TypedDict, total=False):
+    eventId: str
+    sequence: int
+    jobId: str
+    eventType: ExternalExecutorEventType
+    occurredAt: str
+    actionType: InstagramExecutorActionType
+    status: ExternalExecutorJobStatus
+    executorAccountId: str
+    targetRef: str
+    quantity: int
+    completedCount: int
+    totalCount: int
+    errorCode: str
+    errorMessage: str
+    usage: ExternalExecutorUsageEvent
+    metadata: dict[str, object]
+
+
+class ExternalModuleManifest(TypedDict, total=False):
+    moduleId: str
+    platform: ExternalExecutorPlatform
+    contractVersions: list[str]
+    features: list[str]
+    capabilities: list[InstagramExecutorActionType]
+    workflowTypes: list[str]
+    supportsPolling: bool
+    supportsCallbacks: bool
+
+
+class ExternalExecutorCallbackEnvelope(TypedDict):
+    contractVersion: str
+    moduleId: str
+    event: ExternalExecutorActionEvent
 
 
 class JobProgressResponse(TypedDict, total=False):
@@ -127,6 +187,8 @@ class JobProgressResponse(TypedDict, total=False):
     errorMessage: str
     result: dict[str, object]
     accountHealth: dict[str, object]
+    eventSequence: int
+    events: list[ExternalExecutorActionEvent]
 
 
 __all__ = [
@@ -142,7 +204,13 @@ __all__ = [
     'ExternalExecutorJobStatus',
     'ExternalExecutorEventType',
     'InstagramExecutorActionType',
-    'AccountSelector',
+    'ExternalExecutorAccountSelector',
+    'ExternalExecutorPolicyEnvelope',
     'JobStartRequest',
+    'JobStartResponse',
     'JobProgressResponse',
+    'ExternalExecutorUsageEvent',
+    'ExternalExecutorActionEvent',
+    'ExternalModuleManifest',
+    'ExternalExecutorCallbackEnvelope',
 ]
