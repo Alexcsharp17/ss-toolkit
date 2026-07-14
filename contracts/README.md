@@ -43,6 +43,11 @@ schema:
 node scripts/generate_external_executor_sdk.mjs
 ```
 
+`external-module-manifest.schema.json` versions the manifest input schemas
+used by capability-driven forms. A module may omit `inputSchemas` for
+backward compatibility; consumers must then fall back to their local generic
+payload editor.
+
 Black-box protocol checks are available at
 `contracts/conformance/python/sspanel_module_conformance.py`. Copy that file
 into a module repository or import it from the toolkit checkout and run

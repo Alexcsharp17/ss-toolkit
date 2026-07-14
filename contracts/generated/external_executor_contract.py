@@ -98,6 +98,22 @@ ExternalExecutorEventType = Literal["job.accepted", "job.started", "job.progress
 InstagramExecutorActionType = Literal["instagram.account.health", "instagram.profile.get", "instagram.media.upload.photo", "instagram.media.upload.video", "instagram.media.upload.reel", "instagram.story.upload", "instagram.comments.list", "instagram.warmup", "instagram.comments.reply", "instagram.comments.smart_reply", "instagram.comments.delete", "instagram.comments.pin", "instagram.dm.inbox", "instagram.dm.send", "instagram.dm.reply", "instagram.insights.basic"]
 
 
+class ExternalExecutorInputFieldSchema(TypedDict, total=False):
+    type: Literal['string', 'integer', 'number', 'boolean', 'array', 'object']
+    title: str
+    description: str
+    enum: list[str]
+    items: dict[str, str]
+    default: object
+
+
+class ExternalExecutorInputSchema(TypedDict, total=False):
+    type: Literal['object']
+    properties: dict[str, ExternalExecutorInputFieldSchema]
+    required: list[str]
+    additionalProperties: bool
+
+
 class ExternalExecutorAccountSelector(TypedDict, total=False):
     mode: Literal['system', 'specific']
     accountIds: list[str]
@@ -165,6 +181,7 @@ class ExternalModuleManifest(TypedDict, total=False):
     contractVersions: list[str]
     features: list[str]
     capabilities: list[InstagramExecutorActionType]
+    inputSchemas: dict[str, ExternalExecutorInputSchema]
     workflowTypes: list[str]
     supportsPolling: bool
     supportsCallbacks: bool
@@ -204,6 +221,8 @@ __all__ = [
     'ExternalExecutorJobStatus',
     'ExternalExecutorEventType',
     'InstagramExecutorActionType',
+    'ExternalExecutorInputFieldSchema',
+    'ExternalExecutorInputSchema',
     'ExternalExecutorAccountSelector',
     'ExternalExecutorPolicyEnvelope',
     'JobStartRequest',

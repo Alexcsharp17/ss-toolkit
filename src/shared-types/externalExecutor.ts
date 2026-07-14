@@ -93,6 +93,26 @@ export const INSTAGRAM_EXECUTOR_IMPLEMENTED_CAPABILITIES = [
 ] as const satisfies readonly InstagramExecutorActionType[];
 export type InstagramExecutorCapability = typeof INSTAGRAM_EXECUTOR_IMPLEMENTED_CAPABILITIES[number];
 
+export type ExternalExecutorInputFieldType = 'string' | 'integer' | 'number' | 'boolean' | 'array' | 'object';
+
+export interface ExternalExecutorInputFieldSchema {
+  type: ExternalExecutorInputFieldType;
+  title?: string;
+  description?: string;
+  enum?: string[];
+  items?: { type: ExternalExecutorInputFieldType };
+  default?: unknown;
+}
+
+export interface ExternalExecutorInputSchema {
+  type: 'object';
+  properties: Record<string, ExternalExecutorInputFieldSchema>;
+  required?: string[];
+  additionalProperties?: boolean;
+}
+
+export type ExternalExecutorInputSchemas = Partial<Record<InstagramExecutorActionType, ExternalExecutorInputSchema>>;
+
 export interface InstagramProfileGetPayload {
   /** Omit both selectors to fetch the authenticated executor account profile. */
   username?: string;
@@ -295,6 +315,7 @@ export interface ExternalModuleManifest {
   contractVersions: ExternalModuleContractVersion[];
   features?: ExternalModuleFeature[];
   capabilities: InstagramExecutorActionType[];
+  inputSchemas?: ExternalExecutorInputSchemas;
   workflowTypes: string[];
   supportsPolling: boolean;
   supportsCallbacks: boolean;
