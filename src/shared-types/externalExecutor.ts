@@ -141,6 +141,7 @@ export interface InstagramWarmupPayload {
   actionMix?: Array<'instagram.account.health' | 'instagram.profile.get' | 'instagram.comments.list'>;
   targetIds?: string[];
   mediaIds?: string[];
+  durationMinutes?: number;
 }
 
 export interface InstagramWarmupProgressResult {
@@ -156,6 +157,9 @@ export interface InstagramWarmupProgressResult {
 export interface InstagramCommentReplyPayload {
   mediaId: string;
   text: string;
+  /** Native Instagram comment id to reply to. */
+  commentId?: string | number;
+  /** @deprecated Use commentId. Kept for compatibility with early executor clients. */
   repliedToCommentId?: string | number;
 }
 
