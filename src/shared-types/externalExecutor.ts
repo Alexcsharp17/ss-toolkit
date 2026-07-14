@@ -289,6 +289,16 @@ export interface InstagramExecutorActionResultMap {
   'instagram.insights.basic': InstagramInsightsResult;
 }
 
+/** Payload selected by an Instagram action type. */
+export type InstagramExecutorActionPayload<
+  TAction extends InstagramExecutorActionType = InstagramExecutorActionType,
+> = InstagramExecutorActionPayloadMap[TAction];
+
+/** Result selected by an Instagram action type. */
+export type InstagramExecutorActionResult<
+  TAction extends InstagramExecutorActionType = InstagramExecutorActionType,
+> = InstagramExecutorActionResultMap[TAction];
+
 export interface InstagramSmartCommentsPayload {
   mediaIds: string[];
   maxCandidates?: number;
@@ -405,6 +415,32 @@ export interface ExternalExecutorJobProgressResponse {
   eventSequence?: number;
   events?: ExternalExecutorActionEvent[];
 }
+
+/**
+ * Action-correlated start request for Instagram callers.
+ *
+ * ExternalExecutorJobStartRequest remains intentionally broad for generic
+ * module clients and older integrations. New Instagram code can use this
+ * alias when it knows the action at compile time.
+ */
+export type ExternalExecutorJobStartRequestFor<
+  TAction extends InstagramExecutorActionType = InstagramExecutorActionType,
+> = Omit<ExternalExecutorJobStartRequest, 'actionType' | 'payload'> & {
+  actionType: TAction;
+  payload: InstagramExecutorActionPayload<TAction>;
+};
+
+/** Union form that preserves action/payload correlation for dynamic dispatch. */
+export type ExternalExecutorJobStartRequestByAction = {
+  [TAction in InstagramExecutorActionType]: ExternalExecutorJobStartRequestFor<TAction>;
+}[InstagramExecutorActionType];
+
+/** Progress response with an action-specific result payload. */
+export type ExternalExecutorJobProgressResponseFor<
+  TAction extends InstagramExecutorActionType = InstagramExecutorActionType,
+> = Omit<ExternalExecutorJobProgressResponse, 'result'> & {
+  result?: InstagramExecutorActionResult<TAction>;
+};
 
 export interface ExternalExecutorUsageEvent {
   metric: string;
