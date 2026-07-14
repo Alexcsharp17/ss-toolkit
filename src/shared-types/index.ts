@@ -1,4 +1,10 @@
 export type { PanelJobKind } from './panelJobKinds';
+export type {
+  ContentCommentCandidate,
+  ContentCommentDecision,
+  ContentCommentGenerationRequest,
+  ContentCommentGenerationResult,
+} from './content';
 export {
   PANEL_JOB_KIND_TG_WARMUP,
   PANEL_JOB_KIND_TG_PARSER,
@@ -8,6 +14,51 @@ export {
   PANEL_JOB_KIND_TG_USER_PARSER,
   PANEL_JOB_KIND_TG_MESSAGE_PARSER,
 } from './panelJobKinds';
+export {
+  EXTERNAL_EXECUTOR_JOB_STATUSES,
+  EXTERNAL_EXECUTOR_EVENT_TYPES,
+  EXTERNAL_EXECUTOR_PLATFORMS,
+  EXTERNAL_MODULE_CONTRACT_VERSIONS,
+  INSTAGRAM_EXECUTOR_IMPLEMENTED_CAPABILITIES,
+  INSTAGRAM_EXECUTOR_ACTION_TYPES,
+  INSTAGRAM_EXECUTOR_WORKFLOW_TYPES,
+} from './externalExecutor';
+export type {
+  ExternalExecutorAccountSelector,
+  ExternalExecutorActionLimit,
+  ExternalExecutorActivityWindow,
+  ExternalExecutorJobProgressResponse,
+  ExternalExecutorJobStartRequest,
+  ExternalExecutorJobStartResponse,
+  ExternalExecutorJobStatus,
+  ExternalExecutorActionEvent,
+  ExternalExecutorCallbackEnvelope,
+  ExternalExecutorEventType,
+  ExternalExecutorPolicyEnvelope,
+  ExternalExecutorProgressiveLimitPolicy,
+  ExternalExecutorUsageEvent,
+  ExternalExecutorPlatform,
+  ExternalModuleContractVersion,
+  ExternalModuleHealthResponse,
+  ExternalModuleManifest,
+  InstagramExecutorActionType,
+  InstagramExecutorCapability,
+  InstagramExecutorWorkflowType,
+  InstagramProfileGetPayload,
+  InstagramProfileGetResult,
+  InstagramCommentsListPayload,
+  InstagramCommentsListResult,
+  InstagramWarmupPayload,
+  InstagramWarmupProgressResult,
+  InstagramCommentReplyPayload,
+  InstagramCommentReplyResult,
+  InstagramExecutorActionPayloadMap,
+  InstagramExecutorActionResultMap,
+  InstagramSmartCommentsPayload,
+  InstagramSmartCommentCandidate,
+  InstagramSmartCommentsProgressResult,
+  InstagramSmartCommentsWorkflowInput,
+} from './externalExecutor';
 export type {
   WarmupPanelJobConfig,
   WarmupJoinGroupsMode,

@@ -29,6 +29,7 @@
     "prepare": "npm run build",
     "prebuild": "node scripts/clean-shared-types-js.cjs",
     "build": "tsc",
+    "contract:sdk": "node scripts/generate_external_executor_sdk.mjs",
     "test": "jest",
     "groq:scenario": "tsx src/scenarios/api-key-retrieval/groq/run.ts"
   },

@@ -12,3 +12,5 @@ playwright-report/
 **/*.log
 .env
 .env.*
+**/__pycache__/
+templates/external-module-python/data/

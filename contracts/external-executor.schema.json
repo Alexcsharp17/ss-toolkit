@@ -1,0 +1,257 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sspanel.dev/contracts/external-executor/1.0/schema.json",
+  "title": "SS-panel external executor contract",
+  "description": "Canonical wire contract for SS-panel managed social modules.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contractVersions",
+    "platforms",
+    "jobStatuses",
+    "eventTypes",
+    "instagramActionTypes",
+    "workflowTypes",
+    "instagramImplementedCapabilities"
+  ],
+  "properties": {
+    "contractVersions": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["1.0"] },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "platforms": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["instagram"] },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "jobStatuses": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "queued",
+          "running",
+          "paused",
+          "completed",
+          "partially_completed",
+          "failed",
+          "cancelled",
+          "challenge_required",
+          "rate_limited",
+          "session_expired",
+          "banned_or_locked"
+        ]
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "eventTypes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "job.accepted",
+          "job.started",
+          "job.progressed",
+          "workflow.paused",
+          "action.completed",
+          "action.failed",
+          "account.health_changed",
+          "job.completed",
+          "job.partially_completed",
+          "job.rate_limited",
+          "job.failed",
+          "job.cancelled"
+        ]
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "instagramActionTypes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "instagram.account.health",
+          "instagram.profile.get",
+          "instagram.media.upload.photo",
+          "instagram.media.upload.video",
+          "instagram.media.upload.reel",
+          "instagram.story.upload",
+          "instagram.comments.list",
+          "instagram.warmup",
+          "instagram.comments.reply",
+          "instagram.comments.smart_reply",
+          "instagram.comments.delete",
+          "instagram.comments.pin",
+          "instagram.dm.inbox",
+          "instagram.dm.send",
+          "instagram.dm.reply",
+          "instagram.insights.basic"
+        ]
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "workflowTypes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "instagram.comments.smart_reply",
+          "instagram.warmup"
+        ]
+      },
+      "minItems": 0,
+      "uniqueItems": true
+    },
+    "instagramImplementedCapabilities": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "instagram.account.health",
+          "instagram.profile.get",
+          "instagram.comments.list",
+          "instagram.warmup",
+          "instagram.comments.reply",
+          "instagram.comments.smart_reply"
+        ]
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "externalExecutorAccountSelector": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["mode"],
+      "properties": {
+        "mode": { "type": "string", "enum": ["system", "specific"] },
+        "accountIds": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "constraints": { "type": "object", "additionalProperties": true }
+      }
+    },
+    "externalExecutorPolicyEnvelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["policyVersion"],
+      "properties": {
+        "policyVersion": { "type": "string", "minLength": 1 },
+        "activityWindows": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["from", "to", "timezone"],
+            "properties": {
+              "from": { "type": "string" },
+              "to": { "type": "string" },
+              "timezone": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "actionLimits": { "type": "object", "additionalProperties": true },
+        "durationMinutes": { "type": "number", "exclusiveMinimum": 0 },
+        "progressiveLimits": { "type": "object", "additionalProperties": true },
+        "riskProfile": { "type": "string", "enum": ["safe", "standard", "fast"] },
+        "scenarioRef": { "type": "string", "minLength": 1 },
+        "targetPolicy": { "type": "object", "additionalProperties": true }
+      }
+    },
+    "jobStartRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "idempotencyKey",
+        "orderId",
+        "platform",
+        "actionType",
+        "quantity",
+        "accountSelector",
+        "payload"
+      ],
+      "properties": {
+        "idempotencyKey": { "type": "string", "minLength": 1 },
+        "orderId": { "type": "integer", "minimum": 1 },
+        "platform": { "const": "instagram" },
+        "actionType": { "type": "string" },
+        "quantity": { "type": "integer", "minimum": 1 },
+        "accountSelector": { "$ref": "#/$defs/externalExecutorAccountSelector" },
+        "payload": { "type": "object", "additionalProperties": true },
+        "policyEnvelope": { "$ref": "#/$defs/externalExecutorPolicyEnvelope" },
+        "callbackUrl": { "type": "string", "format": "uri" }
+      }
+    },
+    "jobStartResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["jobId", "status", "acceptedAt"],
+      "properties": {
+        "jobId": { "type": "string", "minLength": 1 },
+        "status": { "type": "string" },
+        "acceptedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "jobProgressResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["jobId", "status", "completedCount", "totalCount"],
+      "properties": {
+        "jobId": { "type": "string", "minLength": 1 },
+        "status": { "type": "string" },
+        "completedCount": { "type": "integer", "minimum": 0 },
+        "totalCount": { "type": "integer", "minimum": 0 },
+        "nextRunAt": { "type": "string", "format": "date-time" },
+        "assignedAccountIds": { "type": "array", "items": { "type": "string" } },
+        "errorCode": { "type": "string" },
+        "errorMessage": { "type": "string" },
+        "result": { "type": "object", "additionalProperties": true },
+        "accountHealth": { "type": "object", "additionalProperties": true },
+        "eventSequence": { "type": "integer", "minimum": 0 },
+        "events": { "type": "array", "items": { "$ref": "#/$defs/actionEvent" } }
+      }
+    },
+    "callbackEnvelope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contractVersion", "moduleId", "event"],
+      "properties": {
+        "contractVersion": { "const": "1.0" },
+        "moduleId": { "type": "string", "minLength": 1 },
+        "event": { "$ref": "#/$defs/actionEvent" }
+      }
+    },
+    "actionEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["eventId", "sequence", "jobId", "eventType", "occurredAt"],
+      "properties": {
+        "eventId": { "type": "string", "minLength": 1 },
+        "sequence": { "type": "integer", "minimum": 1 },
+        "jobId": { "type": "string", "minLength": 1 },
+        "eventType": { "type": "string" },
+        "occurredAt": { "type": "string", "format": "date-time" },
+        "actionType": { "type": "string" },
+        "status": { "type": "string" },
+        "executorAccountId": { "type": "string" },
+        "targetRef": { "type": "string" },
+        "quantity": { "type": "integer", "minimum": 0 },
+        "completedCount": { "type": "integer", "minimum": 0 },
+        "totalCount": { "type": "integer", "minimum": 0 },
+        "errorCode": { "type": "string" },
+        "errorMessage": { "type": "string" },
+        "usage": { "type": "object", "additionalProperties": true },
+        "metadata": { "type": "object", "additionalProperties": true }
+      }
+    }
+  }
+}
