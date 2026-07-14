@@ -25,6 +25,7 @@ export {
   INSTAGRAM_EXECUTOR_WORKFLOW_TYPES,
 } from './externalExecutor';
 export type {
+  ExternalExecutorAccountConstraints,
   ExternalExecutorAccountSelector,
   ExternalExecutorAccountDeleteResponse,
   ExternalExecutorActionLimit,

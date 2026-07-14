@@ -340,10 +340,16 @@ export interface ExternalModuleHealthResponse {
   status: 'ok' | 'degraded' | 'unavailable';
 }
 
+export interface ExternalExecutorAccountConstraints {
+  allowedExecutorAccountIds?: string[];
+  excludeExecutorAccountIds?: string[];
+  [constraint: string]: unknown;
+}
+
 export interface ExternalExecutorAccountSelector {
   mode: 'system' | 'specific';
   accountIds?: string[];
-  constraints?: Record<string, unknown>;
+  constraints?: ExternalExecutorAccountConstraints;
 }
 
 export interface ExternalExecutorAccountDeleteResponse {

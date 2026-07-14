@@ -164,7 +164,25 @@
           "items": { "type": "string", "minLength": 1 },
           "uniqueItems": true
         },
-        "constraints": { "type": "object", "additionalProperties": true }
+        "constraints": { "$ref": "#/$defs/externalExecutorAccountConstraints" }
+      }
+    },
+    "externalExecutorAccountConstraints": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "allowedExecutorAccountIds": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 1,
+          "uniqueItems": true
+        },
+        "excludeExecutorAccountIds": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "minItems": 0,
+          "uniqueItems": true
+        }
       }
     },
     "externalExecutorPolicyEnvelope": {

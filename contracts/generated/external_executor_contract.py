@@ -98,6 +98,11 @@ ExternalExecutorEventType = Literal["job.accepted", "job.started", "job.progress
 InstagramExecutorActionType = Literal["instagram.account.health", "instagram.profile.get", "instagram.media.upload.photo", "instagram.media.upload.video", "instagram.media.upload.reel", "instagram.story.upload", "instagram.comments.list", "instagram.warmup", "instagram.comments.reply", "instagram.comments.smart_reply", "instagram.comments.delete", "instagram.comments.pin", "instagram.dm.inbox", "instagram.dm.send", "instagram.dm.reply", "instagram.insights.basic"]
 
 
+class ExternalExecutorAccountConstraints(TypedDict, total=False):
+    allowedExecutorAccountIds: list[str]
+    excludeExecutorAccountIds: list[str]
+
+
 class ExternalExecutorInputFieldSchema(TypedDict, total=False):
     type: Literal['string', 'integer', 'number', 'boolean', 'array', 'object']
     title: str
@@ -117,7 +122,7 @@ class ExternalExecutorInputSchema(TypedDict, total=False):
 class ExternalExecutorAccountSelector(TypedDict, total=False):
     mode: Literal['system', 'specific']
     accountIds: list[str]
-    constraints: dict[str, object]
+    constraints: ExternalExecutorAccountConstraints
 
 
 class ExternalExecutorPolicyEnvelope(TypedDict, total=False):
@@ -223,6 +228,7 @@ __all__ = [
     'InstagramExecutorActionType',
     'ExternalExecutorInputFieldSchema',
     'ExternalExecutorInputSchema',
+    'ExternalExecutorAccountConstraints',
     'ExternalExecutorAccountSelector',
     'ExternalExecutorPolicyEnvelope',
     'JobStartRequest',

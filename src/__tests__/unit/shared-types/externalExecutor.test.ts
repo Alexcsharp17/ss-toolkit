@@ -7,6 +7,8 @@ import {
   INSTAGRAM_EXECUTOR_ACTION_TYPES,
 } from '../../../shared-types';
 import type {
+  ExternalExecutorAccountConstraints,
+  ExternalExecutorAccountSelector,
   ExternalExecutorJobProgressResponseFor,
   ExternalExecutorJobStartRequestByAction,
   ExternalExecutorJobStartRequestFor,
@@ -119,5 +121,19 @@ describe('external executor shared types', () => {
 
     expect(request.payload).toEqual({});
     expect(progress.status).toBe('running');
+  });
+
+  it('types shared account selection constraints while allowing module-specific fields', () => {
+    const constraints: ExternalExecutorAccountConstraints = {
+      allowedExecutorAccountIds: ['ig_acc_1'],
+      excludeExecutorAccountIds: ['ig_acc_2'],
+      geo: 'US',
+    };
+    const selector: ExternalExecutorAccountSelector = {
+      mode: 'system',
+      constraints,
+    };
+
+    expect(selector.constraints).toEqual(constraints);
   });
 });

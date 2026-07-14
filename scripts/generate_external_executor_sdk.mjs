@@ -33,6 +33,21 @@ const normalizedOutput = output
     "    'CONTRACT_VERSIONS',\n    'MODULE_FEATURES',\n",
   )
   .replace(
+    "    constraints: dict[str, object]",
+    "    constraints: ExternalExecutorAccountConstraints",
+  )
+  .replace(
+    "\n\nclass ExternalExecutorAccountSelector",
+    `
+
+class ExternalExecutorAccountConstraints(TypedDict, total=False):
+    allowedExecutorAccountIds: list[str]
+    excludeExecutorAccountIds: list[str]
+
+
+class ExternalExecutorAccountSelector`,
+  )
+  .replace(
     "\n\nclass ExternalExecutorAccountSelector",
     `
 
@@ -60,6 +75,6 @@ class ExternalExecutorAccountSelector`,
   )
   .replace(
     "    'ExternalExecutorAccountSelector',\n",
-    "    'ExternalExecutorInputFieldSchema',\n    'ExternalExecutorInputSchema',\n    'ExternalExecutorAccountSelector',\n",
+    "    'ExternalExecutorInputFieldSchema',\n    'ExternalExecutorInputSchema',\n    'ExternalExecutorAccountConstraints',\n    'ExternalExecutorAccountSelector',\n",
   );
 fs.writeFileSync(outputPath, normalizedOutput);
