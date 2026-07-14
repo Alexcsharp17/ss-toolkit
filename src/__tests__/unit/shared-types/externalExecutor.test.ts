@@ -32,6 +32,16 @@ describe('external executor shared types', () => {
       'instagram.warmup',
       'instagram.comments.reply',
       'instagram.comments.smart_reply',
+      'instagram.comments.delete',
+      'instagram.comments.pin',
+      'instagram.media.upload.photo',
+      'instagram.media.upload.video',
+      'instagram.media.upload.reel',
+      'instagram.story.upload',
+      'instagram.dm.inbox',
+      'instagram.dm.send',
+      'instagram.dm.reply',
+      'instagram.insights.basic',
     ]);
   });
 });

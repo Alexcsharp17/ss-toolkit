@@ -70,6 +70,16 @@ export const INSTAGRAM_EXECUTOR_IMPLEMENTED_CAPABILITIES = [
   'instagram.warmup',
   'instagram.comments.reply',
   'instagram.comments.smart_reply',
+  'instagram.comments.delete',
+  'instagram.comments.pin',
+  'instagram.media.upload.photo',
+  'instagram.media.upload.video',
+  'instagram.media.upload.reel',
+  'instagram.story.upload',
+  'instagram.dm.inbox',
+  'instagram.dm.send',
+  'instagram.dm.reply',
+  'instagram.insights.basic',
 ] as const satisfies readonly InstagramExecutorActionType[];
 export type InstagramExecutorCapability = typeof INSTAGRAM_EXECUTOR_IMPLEMENTED_CAPABILITIES[number];
 
@@ -125,22 +135,124 @@ export interface InstagramCommentReplyResult {
   executorAccountId: string;
 }
 
+export interface InstagramMediaUploadPayload {
+  /** HTTPS URL fetched by the executor into private temporary storage. */
+  mediaUrl: string;
+  caption?: string;
+  thumbnailUrl?: string;
+}
+
+export interface InstagramMediaUploadResult {
+  media: Record<string, unknown>;
+  executorAccountId: string;
+  mediaId?: string;
+}
+
+export interface InstagramStoryUploadPayload extends InstagramMediaUploadPayload {
+  mediaType: 'photo' | 'video';
+}
+
+export interface InstagramStoryUploadResult {
+  story: Record<string, unknown>;
+  executorAccountId: string;
+  mediaId?: string;
+}
+
+export interface InstagramCommentModerationPayload {
+  mediaId: string;
+  commentIds: Array<string | number>;
+}
+
+export interface InstagramCommentModerationResult {
+  mediaId: string;
+  affectedCommentIds: string[];
+  executorAccountId: string;
+}
+
+export interface InstagramDmInboxPayload {
+  amount?: number;
+  selectedFilter?: 'flagged' | 'unread';
+  box?: 'primary' | 'general';
+  threadMessageLimit?: number;
+}
+
+export interface InstagramDmInboxResult {
+  threads: Array<Record<string, unknown>>;
+  executorAccountId: string;
+}
+
+export interface InstagramDmSendPayload {
+  text: string;
+  userIds?: Array<string | number>;
+  threadIds?: Array<string | number>;
+}
+
+export interface InstagramDmSendResult {
+  message: Record<string, unknown>;
+  executorAccountId: string;
+  messageId?: string;
+  threadId?: string;
+}
+
+export interface InstagramDmReplyPayload {
+  threadId: string | number;
+  text: string;
+}
+
+export interface InstagramDmReplyResult {
+  message: Record<string, unknown>;
+  executorAccountId: string;
+  messageId?: string;
+  threadId?: string;
+}
+
+export interface InstagramInsightsPayload {
+  mediaId?: string;
+}
+
+export interface InstagramInsightsResult {
+  scope: 'account' | 'media';
+  insights: Record<string, unknown>;
+  executorAccountId: string;
+  mediaId?: string;
+}
+
 export interface InstagramExecutorActionPayloadMap {
   'instagram.account.health': Record<string, never>;
   'instagram.profile.get': InstagramProfileGetPayload;
+  'instagram.media.upload.photo': InstagramMediaUploadPayload;
+  'instagram.media.upload.video': InstagramMediaUploadPayload;
+  'instagram.media.upload.reel': InstagramMediaUploadPayload;
+  'instagram.story.upload': InstagramStoryUploadPayload;
   'instagram.comments.list': InstagramCommentsListPayload;
   'instagram.warmup': InstagramWarmupPayload;
   'instagram.comments.reply': InstagramCommentReplyPayload;
   'instagram.comments.smart_reply': InstagramSmartCommentsPayload;
+  'instagram.comments.delete': InstagramCommentModerationPayload;
+  'instagram.comments.pin': InstagramCommentModerationPayload;
+  'instagram.dm.inbox': InstagramDmInboxPayload;
+  'instagram.dm.send': InstagramDmSendPayload;
+  'instagram.dm.reply': InstagramDmReplyPayload;
+  'instagram.insights.basic': InstagramInsightsPayload;
 }
 
 export interface InstagramExecutorActionResultMap {
   'instagram.account.health': Record<string, unknown>;
   'instagram.profile.get': InstagramProfileGetResult;
+  'instagram.media.upload.photo': InstagramMediaUploadResult;
+  'instagram.media.upload.video': InstagramMediaUploadResult;
+  'instagram.media.upload.reel': InstagramMediaUploadResult;
+  'instagram.story.upload': InstagramStoryUploadResult;
   'instagram.comments.list': InstagramCommentsListResult;
   'instagram.warmup': InstagramWarmupProgressResult;
   'instagram.comments.reply': InstagramCommentReplyResult;
   'instagram.comments.smart_reply': InstagramSmartCommentsProgressResult;
+  'instagram.comments.delete': InstagramCommentModerationResult;
+  'instagram.comments.pin': InstagramCommentModerationResult;
+  'instagram.dm.inbox': InstagramDmInboxResult;
+  'instagram.dm.send': InstagramDmSendResult;
+  'instagram.dm.reply': InstagramDmReplyResult;
+  'instagram.insights.basic': InstagramInsightsResult;
 }
 
 export interface InstagramSmartCommentsPayload {
