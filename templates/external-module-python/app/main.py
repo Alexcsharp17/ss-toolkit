@@ -81,6 +81,7 @@ async def manifest() -> dict[str, Any]:
         "moduleId": MODULE_ID,
         "platform": PLATFORM,
         "contractVersions": ["1.0"],
+        "features": [],
         "capabilities": list(CAPABILITIES),
         "workflowTypes": [],
         "supportsPolling": True,

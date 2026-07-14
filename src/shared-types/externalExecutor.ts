@@ -6,6 +6,16 @@ export type ExternalExecutorPlatform = typeof EXTERNAL_EXECUTOR_PLATFORMS[number
 export const EXTERNAL_MODULE_CONTRACT_VERSIONS = ['1.0'] as const;
 export type ExternalModuleContractVersion = typeof EXTERNAL_MODULE_CONTRACT_VERSIONS[number];
 
+export const EXTERNAL_MODULE_FEATURES = [
+  'callbacks.v1',
+  'event-sequence.v1',
+  'managed-workflows.v1',
+  'pause-resume.v1',
+  'provider-retry-confirmation.v1',
+  'workflow-input.v1',
+] as const;
+export type ExternalModuleFeature = typeof EXTERNAL_MODULE_FEATURES[number];
+
 export const EXTERNAL_EXECUTOR_JOB_STATUSES = [
   'queued',
   'running',
@@ -283,6 +293,7 @@ export interface ExternalModuleManifest {
   moduleId: string;
   platform: ExternalExecutorPlatform;
   contractVersions: ExternalModuleContractVersion[];
+  features?: ExternalModuleFeature[];
   capabilities: InstagramExecutorActionType[];
   workflowTypes: string[];
   supportsPolling: boolean;

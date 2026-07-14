@@ -7,6 +7,7 @@
   "additionalProperties": false,
   "required": [
     "contractVersions",
+    "moduleFeatures",
     "platforms",
     "jobStatuses",
     "eventTypes",
@@ -19,6 +20,22 @@
       "type": "array",
       "items": { "type": "string", "enum": ["1.0"] },
       "minItems": 1,
+      "uniqueItems": true
+    },
+    "moduleFeatures": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "callbacks.v1",
+          "event-sequence.v1",
+          "managed-workflows.v1",
+          "pause-resume.v1",
+          "provider-retry-confirmation.v1",
+          "workflow-input.v1"
+        ]
+      },
+      "minItems": 0,
       "uniqueItems": true
     },
     "platforms": {

@@ -12,6 +12,7 @@ const schema = JSON.parse(fs.readFileSync(schemaPath, 'utf8'));
 
 const fields = [
   ['contractVersions', 'CONTRACT_VERSIONS'],
+  ['moduleFeatures', 'MODULE_FEATURES'],
   ['platforms', 'PLATFORMS'],
   ['jobStatuses', 'JOB_STATUSES'],
   ['eventTypes', 'EVENT_TYPES'],

@@ -2,6 +2,7 @@ import {
   EXTERNAL_EXECUTOR_JOB_STATUSES,
   EXTERNAL_EXECUTOR_PLATFORMS,
   EXTERNAL_MODULE_CONTRACT_VERSIONS,
+  EXTERNAL_MODULE_FEATURES,
   INSTAGRAM_EXECUTOR_IMPLEMENTED_CAPABILITIES,
   INSTAGRAM_EXECUTOR_ACTION_TYPES,
 } from '../../../shared-types';
@@ -25,6 +26,14 @@ describe('external executor shared types', () => {
     expect(INSTAGRAM_EXECUTOR_ACTION_TYPES).toContain('instagram.comments.reply');
     expect(INSTAGRAM_EXECUTOR_ACTION_TYPES).toContain('instagram.account.health');
     expect(EXTERNAL_MODULE_CONTRACT_VERSIONS).toEqual(['1.0']);
+    expect(EXTERNAL_MODULE_FEATURES).toEqual([
+      'callbacks.v1',
+      'event-sequence.v1',
+      'managed-workflows.v1',
+      'pause-resume.v1',
+      'provider-retry-confirmation.v1',
+      'workflow-input.v1',
+    ]);
     expect(INSTAGRAM_EXECUTOR_IMPLEMENTED_CAPABILITIES).toEqual([
       'instagram.account.health',
       'instagram.profile.get',

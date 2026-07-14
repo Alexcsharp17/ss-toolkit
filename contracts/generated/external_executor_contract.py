@@ -6,6 +6,15 @@ CONTRACT_VERSIONS = (
     "1.0",
 )
 
+MODULE_FEATURES = (
+    "callbacks.v1",
+    "event-sequence.v1",
+    "managed-workflows.v1",
+    "pause-resume.v1",
+    "provider-retry-confirmation.v1",
+    "workflow-input.v1",
+)
+
 PLATFORMS = (
     "instagram",
 )
