@@ -1,4 +1,4 @@
-# Generated from contracts/external-executor.schema.json. Do not edit manually.
+# Generated from the external executor core and Instagram extension schemas. Do not edit manually.
 from typing import Literal, TypedDict
 
 
@@ -55,6 +55,7 @@ INSTAGRAM_ACTION_TYPES = (
     "instagram.media.upload.photo",
     "instagram.media.upload.video",
     "instagram.media.upload.reel",
+    "instagram.media.like",
     "instagram.story.upload",
     "instagram.comments.list",
     "instagram.warmup",
@@ -85,6 +86,7 @@ INSTAGRAM_IMPLEMENTED_CAPABILITIES = (
     "instagram.media.upload.photo",
     "instagram.media.upload.video",
     "instagram.media.upload.reel",
+    "instagram.media.like",
     "instagram.story.upload",
     "instagram.dm.inbox",
     "instagram.dm.send",
@@ -92,15 +94,12 @@ INSTAGRAM_IMPLEMENTED_CAPABILITIES = (
     "instagram.insights.basic",
 )
 
-ExternalExecutorPlatform = Literal["instagram"]
+ExternalExecutorPlatform = str
+ExternalExecutorActionType = str
+RegisteredExternalExecutorPlatform = Literal["instagram"]
 ExternalExecutorJobStatus = Literal["queued", "running", "paused", "completed", "partially_completed", "failed", "cancelled", "challenge_required", "rate_limited", "session_expired", "banned_or_locked"]
 ExternalExecutorEventType = Literal["job.accepted", "job.started", "job.progressed", "workflow.paused", "action.completed", "action.failed", "account.health_changed", "job.completed", "job.partially_completed", "job.rate_limited", "job.failed", "job.cancelled"]
-InstagramExecutorActionType = Literal["instagram.account.health", "instagram.profile.get", "instagram.media.upload.photo", "instagram.media.upload.video", "instagram.media.upload.reel", "instagram.story.upload", "instagram.comments.list", "instagram.warmup", "instagram.comments.reply", "instagram.comments.smart_reply", "instagram.comments.delete", "instagram.comments.pin", "instagram.dm.inbox", "instagram.dm.send", "instagram.dm.reply", "instagram.insights.basic"]
-
-
-class ExternalExecutorAccountConstraints(TypedDict, total=False):
-    allowedExecutorAccountIds: list[str]
-    excludeExecutorAccountIds: list[str]
+InstagramExecutorActionType = Literal["instagram.account.health", "instagram.profile.get", "instagram.media.upload.photo", "instagram.media.upload.video", "instagram.media.upload.reel", "instagram.media.like", "instagram.story.upload", "instagram.comments.list", "instagram.warmup", "instagram.comments.reply", "instagram.comments.smart_reply", "instagram.comments.delete", "instagram.comments.pin", "instagram.dm.inbox", "instagram.dm.send", "instagram.dm.reply", "instagram.insights.basic"]
 
 
 class ExternalExecutorInputFieldSchema(TypedDict, total=False):
@@ -119,10 +118,53 @@ class ExternalExecutorInputSchema(TypedDict, total=False):
     additionalProperties: bool
 
 
+class ExternalExecutorAccountConstraints(TypedDict, total=False):
+    allowedExecutorAccountIds: list[str]
+    excludeExecutorAccountIds: list[str]
+
+
 class ExternalExecutorAccountSelector(TypedDict, total=False):
     mode: Literal['system', 'specific']
     accountIds: list[str]
     constraints: ExternalExecutorAccountConstraints
+
+
+class InstagramExecutorCookie(TypedDict, total=False):
+    name: str
+    value: str
+    domain: str
+    path: str
+    secure: bool
+    httpOnly: bool
+    expires: float
+
+
+class InstagramExecutorAccountImportRequest(TypedDict, total=False):
+    username: str
+    password: str
+    twoFactorSecret: str
+    sessionid: str
+    cookies: list[InstagramExecutorCookie]
+    settings: dict[str, object]
+    proxy: str
+
+
+class InstagramExecutorAccountImportResponse(TypedDict, total=False):
+    executorAccountId: str
+    status: str
+    username: str
+    displayName: str
+    authenticationMethod: Literal['session', 'credentials', 'stored']
+
+
+class ExternalExecutorAccountProxyUpdateRequest(TypedDict):
+    proxy: str | None
+
+
+class ExternalExecutorAccountProxyUpdateResponse(TypedDict):
+    executorAccountId: str
+    configured: bool
+    updatedAt: str
 
 
 class ExternalExecutorPolicyEnvelope(TypedDict, total=False):
@@ -140,7 +182,7 @@ class JobStartRequest(TypedDict, total=False):
     idempotencyKey: str
     orderId: int
     platform: ExternalExecutorPlatform
-    actionType: InstagramExecutorActionType
+    actionType: ExternalExecutorActionType
     quantity: int
     accountSelector: ExternalExecutorAccountSelector
     payload: dict[str, object]
@@ -167,7 +209,7 @@ class ExternalExecutorActionEvent(TypedDict, total=False):
     jobId: str
     eventType: ExternalExecutorEventType
     occurredAt: str
-    actionType: InstagramExecutorActionType
+    actionType: ExternalExecutorActionType
     status: ExternalExecutorJobStatus
     executorAccountId: str
     targetRef: str
@@ -185,7 +227,7 @@ class ExternalModuleManifest(TypedDict, total=False):
     platform: ExternalExecutorPlatform
     contractVersions: list[str]
     features: list[str]
-    capabilities: list[InstagramExecutorActionType]
+    capabilities: list[ExternalExecutorActionType]
     inputSchemas: dict[str, ExternalExecutorInputSchema]
     workflowTypes: list[str]
     supportsPolling: bool
@@ -223,6 +265,8 @@ __all__ = [
     'WORKFLOW_TYPES',
     'INSTAGRAM_IMPLEMENTED_CAPABILITIES',
     'ExternalExecutorPlatform',
+    'ExternalExecutorActionType',
+    'RegisteredExternalExecutorPlatform',
     'ExternalExecutorJobStatus',
     'ExternalExecutorEventType',
     'InstagramExecutorActionType',
@@ -230,6 +274,11 @@ __all__ = [
     'ExternalExecutorInputSchema',
     'ExternalExecutorAccountConstraints',
     'ExternalExecutorAccountSelector',
+    'InstagramExecutorCookie',
+    'InstagramExecutorAccountImportRequest',
+    'InstagramExecutorAccountImportResponse',
+    'ExternalExecutorAccountProxyUpdateRequest',
+    'ExternalExecutorAccountProxyUpdateResponse',
     'ExternalExecutorPolicyEnvelope',
     'JobStartRequest',
     'JobStartResponse',

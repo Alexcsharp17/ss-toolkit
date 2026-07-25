@@ -9,9 +9,13 @@ import {
 import type {
   ExternalExecutorAccountConstraints,
   ExternalExecutorAccountSelector,
+  ExternalExecutorAccountProxyUpdateRequest,
+  ExternalExecutorAccountProxyUpdateResponse,
   ExternalExecutorJobProgressResponseFor,
   ExternalExecutorJobStartRequestByAction,
   ExternalExecutorJobStartRequestFor,
+  InstagramExecutorAccountImportRequest,
+  InstagramExecutorAccountImportResponse,
   InstagramExecutorActionPayload,
   InstagramExecutorActionResult,
 } from '../../../shared-types';
@@ -34,6 +38,7 @@ describe('external executor shared types', () => {
     ]);
     expect(INSTAGRAM_EXECUTOR_ACTION_TYPES).toContain('instagram.comments.reply');
     expect(INSTAGRAM_EXECUTOR_ACTION_TYPES).toContain('instagram.account.health');
+    expect(INSTAGRAM_EXECUTOR_ACTION_TYPES).toContain('instagram.media.like');
     expect(EXTERNAL_MODULE_CONTRACT_VERSIONS).toEqual(['1.0', '1.1']);
     expect(EXTERNAL_MODULE_FEATURES).toEqual([
       'callbacks.v1',
@@ -55,6 +60,7 @@ describe('external executor shared types', () => {
       'instagram.media.upload.photo',
       'instagram.media.upload.video',
       'instagram.media.upload.reel',
+      'instagram.media.like',
       'instagram.story.upload',
       'instagram.dm.inbox',
       'instagram.dm.send',
@@ -99,6 +105,17 @@ describe('external executor shared types', () => {
     expect(dynamicRequest.payload).toEqual(replyRequest.payload);
     expect(dmPayload.text).toBe('Hello');
     expect(progress.result?.executorAccountId).toBe('account-1');
+
+    const likePayload: InstagramExecutorActionPayload<'instagram.media.like'> = {
+      mediaUrl: 'https://www.instagram.com/p/example/',
+    };
+    const likeResult: InstagramExecutorActionResult<'instagram.media.like'> = {
+      mediaId: '123_456',
+      mediaUrl: likePayload.mediaUrl,
+      liked: true,
+      executorAccountId: 'account-1',
+    };
+    expect(likeResult.liked).toBe(true);
   });
 
   it('keeps the default aliases usable for generic clients', () => {
@@ -135,5 +152,39 @@ describe('external executor shared types', () => {
     };
 
     expect(selector.constraints).toEqual(constraints);
+  });
+
+  it('shares the secret-bearing Instagram account import boundary', () => {
+    const request: InstagramExecutorAccountImportRequest = {
+      username: 'ig_user',
+      password: 'synthetic-password',
+      twoFactorSecret: 'JBSWY3DPEHPK3PXP',
+      sessionid: '1234567890:synthetic-session-value-for-tests',
+      cookies: [
+        { name: 'sessionid', value: '1234567890%3Asynthetic-session-value-for-tests', secure: true },
+      ],
+      proxy: 'http://proxy.example.test:8000',
+    };
+    const response: InstagramExecutorAccountImportResponse = {
+      executorAccountId: 'ig_acc_1',
+      status: 'imported',
+      username: request.username,
+      authenticationMethod: 'stored',
+    };
+
+    expect(request.cookies?.[0]?.name).toBe('sessionid');
+    expect(response.authenticationMethod).toBe('stored');
+  });
+
+  it('shares the secret-bearing account proxy update boundary', () => {
+    const request: ExternalExecutorAccountProxyUpdateRequest = { proxy: null };
+    const response: ExternalExecutorAccountProxyUpdateResponse = {
+      executorAccountId: 'ig_acc_1',
+      configured: false,
+      updatedAt: new Date(0).toISOString(),
+    };
+
+    expect(request.proxy).toBeNull();
+    expect(response.configured).toBe(false);
   });
 });

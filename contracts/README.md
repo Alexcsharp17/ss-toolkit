@@ -1,9 +1,17 @@
 # External Module Contract
 
-`external-executor.schema.json` is the canonical wire contract for modules
-managed by SS-panel. TypeScript consumers import the matching types from
-`@sspanel/ss-toolkit/shared-types`; non-TypeScript modules must generate or
-validate their local models from this schema.
+The contract is split into two source schemas:
+
+- `external-executor-core.schema.json` contains the platform-neutral job
+  lifecycle, events, policies, selectors, and shared statuses.
+- `instagram-executor.schema.json` contains Instagram capabilities, workflows,
+  and account import shapes.
+
+`external-executor.schema.json` is a generated compatibility bundle consumed
+by existing drift tests and Python modules. TypeScript consumers import the
+matching core or platform-extension types from
+`@sspanel/ss-toolkit/shared-types`; non-TypeScript modules may validate against
+the bundle or generate models from the source schemas.
 
 ## Required module surface
 
@@ -56,9 +64,10 @@ checks authentication, health, manifest, capability rejection, idempotent
 start, and polling without calling a live provider account.
 
 The starter is a REST microservice baseline, not a gateway. It demonstrates
-authentication, health, manifest, idempotent jobs, SQLite persistence, and a
+authentication, health, manifest, idempotent jobs, persistent storage, and a
 conformance test while leaving platform-specific workflows to the module
-repository.
+repository. PostgreSQL is the production default; local SQLite support exists
+only as an explicit development/test adapter.
 
 ## Fork convention
 
