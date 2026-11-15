@@ -16,6 +16,18 @@ DEFAULT_REQUIRED_CAPABILITIES = (
     "instagram.comments.list",
 )
 
+TERMINAL_JOB_STATUSES = frozenset(
+    {
+        "completed",
+        "partially_completed",
+        "failed",
+        "cancelled",
+        "challenge_required",
+        "session_expired",
+        "banned_or_locked",
+    }
+)
+
 
 async def assert_sspanel_module_conformance(
     client: Any,
@@ -92,4 +104,22 @@ async def assert_sspanel_module_conformance(
     assert body.get("jobId") == first.json().get("jobId")
     assert isinstance(body.get("completedCount"), int)
     assert isinstance(body.get("totalCount"), int)
+
+    cancelled = await client.post(
+        f"/module/v1/jobs/{first.json()['jobId']}/cancel",
+        headers=headers,
+    )
+    assert cancelled.status_code == 200
+    cancel_status = cancelled.json().get("status")
+    expected_cancel_status = (
+        body["status"] if body["status"] in TERMINAL_JOB_STATUSES else "cancelled"
+    )
+    assert cancel_status == expected_cancel_status
+
+    persisted = await client.get(
+        f"/module/v1/jobs/{first.json()['jobId']}",
+        headers=headers,
+    )
+    assert persisted.status_code == 200
+    assert persisted.json().get("status") == cancel_status
     return manifest

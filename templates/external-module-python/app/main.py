@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import sqlite3
 from datetime import datetime, timezone
@@ -35,6 +36,8 @@ class JobStartRequest(BaseModel):
     quantity: int = Field(ge=1)
     accountSelector: AccountSelector
     payload: dict[str, Any] = Field(default_factory=dict)
+    policyEnvelope: dict[str, Any] | None = None
+    callbackUrl: str | None = Field(default=None, min_length=1)
 
 
 def utc_now() -> str:
@@ -48,8 +51,34 @@ def db() -> sqlite3.Connection:
     connection = sqlite3.connect(DB_PATH)
     connection.row_factory = sqlite3.Row
     connection.execute(
-        "CREATE TABLE IF NOT EXISTS jobs (job_id TEXT PRIMARY KEY, idempotency_key TEXT UNIQUE NOT NULL, payload TEXT NOT NULL)"
+        """
+        CREATE TABLE IF NOT EXISTS jobs (
+            job_id TEXT PRIMARY KEY,
+            idempotency_key TEXT UNIQUE NOT NULL,
+            payload TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'queued',
+            completed_count INTEGER NOT NULL DEFAULT 0,
+            total_count INTEGER NOT NULL DEFAULT 1,
+            result TEXT NOT NULL DEFAULT '{}',
+            account_health TEXT NOT NULL DEFAULT '{}',
+            accepted_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )
+        """
     )
+    columns = {row[1] for row in connection.execute("PRAGMA table_info(jobs)").fetchall()}
+    migrations = {
+        "status": "TEXT NOT NULL DEFAULT 'queued'",
+        "completed_count": "INTEGER NOT NULL DEFAULT 0",
+        "total_count": "INTEGER NOT NULL DEFAULT 1",
+        "result": "TEXT NOT NULL DEFAULT '{}'",
+        "account_health": "TEXT NOT NULL DEFAULT '{}'",
+        "accepted_at": "TEXT NOT NULL DEFAULT ''",
+        "updated_at": "TEXT NOT NULL DEFAULT ''",
+    }
+    for name, definition in migrations.items():
+        if name not in columns:
+            connection.execute(f"ALTER TABLE jobs ADD COLUMN {name} {definition}")
     return connection
 
 
@@ -59,15 +88,27 @@ def executor_key(x_sspanel_executor_key: str | None = Header(default=None)) -> N
         raise HTTPException(status_code=401, detail="Invalid SS-panel executor API key")
 
 
-def job_response(job_id: str, request: JobStartRequest | None = None) -> dict[str, Any]:
+def decode_json(value: str | None) -> dict[str, Any]:
+    try:
+        parsed = json.loads(value or "{}")
+    except json.JSONDecodeError:
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
+
+
+def job_response(row: sqlite3.Row) -> dict[str, Any]:
     return {
-        "jobId": job_id,
-        "status": "queued",
-        "completedCount": 0,
-        "totalCount": request.quantity if request else 1,
-        "result": {},
-        "accountHealth": {},
+        "jobId": row["job_id"],
+        "status": row["status"],
+        "completedCount": row["completed_count"],
+        "totalCount": row["total_count"],
+        "result": decode_json(row["result"]),
+        "accountHealth": decode_json(row["account_health"]),
     }
+
+
+def find_job(connection: sqlite3.Connection, job_id: str) -> sqlite3.Row | None:
+    return connection.execute("SELECT * FROM jobs WHERE job_id = ?", (job_id,)).fetchone()
 
 
 @app.get("/module/v1/health")
@@ -94,33 +135,55 @@ async def start_job(request: JobStartRequest) -> dict[str, Any]:
     if request.platform != PLATFORM or request.actionType not in CAPABILITIES:
         raise HTTPException(status_code=422, detail="Unsupported module capability")
     job_id = "job_" + hashlib.sha256(request.idempotencyKey.encode()).hexdigest()[:24]
+    accepted_at = utc_now()
     connection = db()
     try:
         connection.execute(
-            "INSERT OR IGNORE INTO jobs(job_id, idempotency_key, payload) VALUES (?, ?, ?)",
-            (job_id, request.idempotencyKey, request.model_dump_json()),
+            """
+            INSERT OR IGNORE INTO jobs(
+                job_id, idempotency_key, payload, status, completed_count,
+                total_count, result, account_health, accepted_at, updated_at
+            ) VALUES (?, ?, ?, 'queued', 0, ?, '{}', '{}', ?, ?)
+            """,
+            (job_id, request.idempotencyKey, request.model_dump_json(), request.quantity, accepted_at, accepted_at),
         )
         connection.commit()
+        row = find_job(connection, job_id)
     finally:
         connection.close()
-    return {"jobId": job_id, "status": "queued", "acceptedAt": utc_now()}
+    if row is None:
+        raise HTTPException(status_code=500, detail="Job persistence failed")
+    return {"jobId": job_id, "status": row["status"], "acceptedAt": row["accepted_at"] or accepted_at}
 
 
 @app.get("/module/v1/jobs/{job_id}", dependencies=[Depends(executor_key)])
 async def get_job(job_id: str) -> dict[str, Any]:
     connection = db()
     try:
-        row = connection.execute("SELECT job_id, payload FROM jobs WHERE job_id = ?", (job_id,)).fetchone()
+        row = find_job(connection, job_id)
     finally:
         connection.close()
     if row is None:
         raise HTTPException(status_code=404, detail="Job not found")
-    request = JobStartRequest.model_validate_json(row["payload"])
-    return job_response(job_id, request)
+    return job_response(row)
 
 
 @app.post("/module/v1/jobs/{job_id}/cancel", dependencies=[Depends(executor_key)])
 async def cancel_job(job_id: str) -> dict[str, Any]:
-    progress = await get_job(job_id)
-    progress["status"] = "cancelled"
-    return progress
+    connection = db()
+    try:
+        row = find_job(connection, job_id)
+        if row is None:
+            raise HTTPException(status_code=404, detail="Job not found")
+        if row["status"] not in {"completed", "partially_completed", "failed", "cancelled"}:
+            connection.execute(
+                "UPDATE jobs SET status = 'cancelled', updated_at = ? WHERE job_id = ?",
+                (utc_now(), job_id),
+            )
+            connection.commit()
+        row = find_job(connection, job_id)
+    finally:
+        connection.close()
+    if row is None:
+        raise HTTPException(status_code=404, detail="Job not found")
+    return job_response(row)

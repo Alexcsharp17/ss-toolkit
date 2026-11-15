@@ -6,9 +6,32 @@ import { fileURLToPath } from 'node:url';
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const toolkitRoot = path.resolve(scriptDir, '..');
-const schemaPath = path.join(toolkitRoot, 'contracts', 'external-executor.schema.json');
-const outputPath = path.join(toolkitRoot, 'contracts', 'generated', 'external_executor_contract.py');
-const schema = JSON.parse(fs.readFileSync(schemaPath, 'utf8'));
+const contractsRoot = path.join(toolkitRoot, 'contracts');
+const coreSchemaPath = path.join(contractsRoot, 'external-executor-core.schema.json');
+const instagramSchemaPath = path.join(contractsRoot, 'instagram-executor.schema.json');
+const bundledSchemaPath = path.join(contractsRoot, 'external-executor.schema.json');
+const outputPath = path.join(contractsRoot, 'generated', 'external_executor_contract.py');
+
+const readSchema = (inputPath) => JSON.parse(fs.readFileSync(inputPath, 'utf8'));
+const coreSchema = readSchema(coreSchemaPath);
+const instagramSchema = readSchema(instagramSchemaPath);
+const schema = {
+  $schema: 'https://json-schema.org/draft/2020-12/schema',
+  $id: 'https://sspanel.dev/contracts/external-executor/1.1/schema.json',
+  title: 'SS-panel external executor bundled contract',
+  description: 'Generated compatibility bundle of the platform-neutral core and Instagram extension.',
+  type: 'object',
+  additionalProperties: false,
+  required: [...coreSchema.required, ...instagramSchema.required],
+  properties: {
+    ...coreSchema.properties,
+    ...instagramSchema.properties,
+  },
+  $defs: {
+    ...coreSchema.$defs,
+    ...instagramSchema.$defs,
+  },
+};
 
 const fields = [
   ['contractVersions', 'CONTRACT_VERSIONS'],
@@ -23,18 +46,24 @@ const fields = [
 
 const valuesFor = (field) => schema.properties[field].items.enum;
 const pythonList = (values) => values.map((value) => `    ${JSON.stringify(value)},`).join('\n');
+const pythonLiteral = (values) => values.map(JSON.stringify).join(', ');
+const constantBlocks = fields
+  .map(([schemaField, pythonName]) => `${pythonName} = (\n${pythonList(valuesFor(schemaField))}\n)`)
+  .join('\n\n');
 
-const output = `# Generated from contracts/external-executor.schema.json. Do not edit manually.\nfrom typing import Literal, TypedDict\n\n${fields.map(([schemaField, pythonName]) => `\n${pythonName} = (\n${pythonList(valuesFor(schemaField))}\n)\n`).join('')}\nExternalExecutorPlatform = Literal[${valuesFor('platforms').map(JSON.stringify).join(', ')}]\nExternalExecutorJobStatus = Literal[${valuesFor('jobStatuses').map(JSON.stringify).join(', ')}]\nExternalExecutorEventType = Literal[${valuesFor('eventTypes').map(JSON.stringify).join(', ')}]\nInstagramExecutorActionType = Literal[${valuesFor('instagramActionTypes').map(JSON.stringify).join(', ')}]\n\n\nclass ExternalExecutorAccountSelector(TypedDict, total=False):\n    mode: Literal['system', 'specific']\n    accountIds: list[str]\n    constraints: dict[str, object]\n\n\nclass ExternalExecutorPolicyEnvelope(TypedDict, total=False):\n    policyVersion: str\n    activityWindows: list[dict[str, str]]\n    actionLimits: dict[str, dict[str, int]]\n    durationMinutes: int\n    progressiveLimits: dict[str, object]\n    riskProfile: Literal['safe', 'standard', 'fast']\n    scenarioRef: str\n    targetPolicy: dict[str, object]\n\n\nclass JobStartRequest(TypedDict, total=False):\n    idempotencyKey: str\n    orderId: int\n    platform: ExternalExecutorPlatform\n    actionType: InstagramExecutorActionType\n    quantity: int\n    accountSelector: ExternalExecutorAccountSelector\n    payload: dict[str, object]\n    policyEnvelope: ExternalExecutorPolicyEnvelope\n    callbackUrl: str\n\n\nclass JobStartResponse(TypedDict):\n    jobId: str\n    status: ExternalExecutorJobStatus\n    acceptedAt: str\n\n\nclass ExternalExecutorUsageEvent(TypedDict, total=False):\n    metric: str\n    amount: float\n    unit: str\n    window: str\n\n\nclass ExternalExecutorActionEvent(TypedDict, total=False):\n    eventId: str\n    sequence: int\n    jobId: str\n    eventType: ExternalExecutorEventType\n    occurredAt: str\n    actionType: InstagramExecutorActionType\n    status: ExternalExecutorJobStatus\n    executorAccountId: str\n    targetRef: str\n    quantity: int\n    completedCount: int\n    totalCount: int\n    errorCode: str\n    errorMessage: str\n    usage: ExternalExecutorUsageEvent\n    metadata: dict[str, object]\n\n\nclass ExternalModuleManifest(TypedDict, total=False):\n    moduleId: str\n    platform: ExternalExecutorPlatform\n    contractVersions: list[str]\n    features: list[str]\n    capabilities: list[InstagramExecutorActionType]\n    workflowTypes: list[str]\n    supportsPolling: bool\n    supportsCallbacks: bool\n\n\nclass ExternalExecutorCallbackEnvelope(TypedDict):\n    contractVersion: str\n    moduleId: str\n    event: ExternalExecutorActionEvent\n\n\nclass JobProgressResponse(TypedDict, total=False):\n    jobId: str\n    status: ExternalExecutorJobStatus\n    completedCount: int\n    totalCount: int\n    nextRunAt: str\n    assignedAccountIds: list[str]\n    errorCode: str\n    errorMessage: str\n    result: dict[str, object]\n    accountHealth: dict[str, object]\n    eventSequence: int\n    events: list[ExternalExecutorActionEvent]\n\n\n__all__ = [\n    'CONTRACT_VERSIONS',\n    'PLATFORMS',\n    'JOB_STATUSES',\n    'EVENT_TYPES',\n    'INSTAGRAM_ACTION_TYPES',\n    'WORKFLOW_TYPES',\n    'INSTAGRAM_IMPLEMENTED_CAPABILITIES',\n    'ExternalExecutorPlatform',\n    'ExternalExecutorJobStatus',\n    'ExternalExecutorEventType',\n    'InstagramExecutorActionType',\n    'ExternalExecutorAccountSelector',\n    'ExternalExecutorPolicyEnvelope',\n    'JobStartRequest',\n    'JobStartResponse',\n    'JobProgressResponse',\n    'ExternalExecutorUsageEvent',\n    'ExternalExecutorActionEvent',\n    'ExternalModuleManifest',\n    'ExternalExecutorCallbackEnvelope',\n]\n`;
+const output = `# Generated from the external executor core and Instagram extension schemas. Do not edit manually.
+from typing import Literal, TypedDict
 
-fs.mkdirSync(path.dirname(outputPath), { recursive: true });
-const normalizedOutput = output
-  .replace(
-    "    'CONTRACT_VERSIONS',\n",
-    "    'CONTRACT_VERSIONS',\n    'MODULE_FEATURES',\n",
-  )
-  .replace(
-    "\n\nclass ExternalExecutorAccountSelector",
-    `
+
+${constantBlocks}
+
+ExternalExecutorPlatform = str
+ExternalExecutorActionType = str
+RegisteredExternalExecutorPlatform = Literal[${pythonLiteral(valuesFor('platforms'))}]
+ExternalExecutorJobStatus = Literal[${pythonLiteral(valuesFor('jobStatuses'))}]
+ExternalExecutorEventType = Literal[${pythonLiteral(valuesFor('eventTypes'))}]
+InstagramExecutorActionType = Literal[${pythonLiteral(valuesFor('instagramActionTypes'))}]
+
 
 class ExternalExecutorInputFieldSchema(TypedDict, total=False):
     type: Literal['string', 'integer', 'number', 'boolean', 'array', 'object']
@@ -52,14 +81,178 @@ class ExternalExecutorInputSchema(TypedDict, total=False):
     additionalProperties: bool
 
 
-class ExternalExecutorAccountSelector`,
-  )
-  .replace(
-    "    capabilities: list[InstagramExecutorActionType]\n",
-    "    capabilities: list[InstagramExecutorActionType]\n    inputSchemas: dict[str, ExternalExecutorInputSchema]\n",
-  )
-  .replace(
-    "    'ExternalExecutorAccountSelector',\n",
-    "    'ExternalExecutorInputFieldSchema',\n    'ExternalExecutorInputSchema',\n    'ExternalExecutorAccountSelector',\n",
-  );
-fs.writeFileSync(outputPath, normalizedOutput);
+class ExternalExecutorAccountConstraints(TypedDict, total=False):
+    allowedExecutorAccountIds: list[str]
+    excludeExecutorAccountIds: list[str]
+
+
+class ExternalExecutorAccountSelector(TypedDict, total=False):
+    mode: Literal['system', 'specific']
+    accountIds: list[str]
+    constraints: ExternalExecutorAccountConstraints
+
+
+class InstagramExecutorCookie(TypedDict, total=False):
+    name: str
+    value: str
+    domain: str
+    path: str
+    secure: bool
+    httpOnly: bool
+    expires: float
+
+
+class InstagramExecutorAccountImportRequest(TypedDict, total=False):
+    username: str
+    password: str
+    twoFactorSecret: str
+    sessionid: str
+    cookies: list[InstagramExecutorCookie]
+    settings: dict[str, object]
+    proxy: str
+
+
+class InstagramExecutorAccountImportResponse(TypedDict, total=False):
+    executorAccountId: str
+    status: str
+    username: str
+    displayName: str
+    authenticationMethod: Literal['session', 'credentials', 'stored']
+
+
+class ExternalExecutorAccountProxyUpdateRequest(TypedDict):
+    proxy: str | None
+
+
+class ExternalExecutorAccountProxyUpdateResponse(TypedDict):
+    executorAccountId: str
+    configured: bool
+    updatedAt: str
+
+
+class ExternalExecutorPolicyEnvelope(TypedDict, total=False):
+    policyVersion: str
+    activityWindows: list[dict[str, str]]
+    actionLimits: dict[str, dict[str, int]]
+    durationMinutes: int
+    progressiveLimits: dict[str, object]
+    riskProfile: Literal['safe', 'standard', 'fast']
+    scenarioRef: str
+    targetPolicy: dict[str, object]
+
+
+class JobStartRequest(TypedDict, total=False):
+    idempotencyKey: str
+    orderId: int
+    platform: ExternalExecutorPlatform
+    actionType: ExternalExecutorActionType
+    quantity: int
+    accountSelector: ExternalExecutorAccountSelector
+    payload: dict[str, object]
+    policyEnvelope: ExternalExecutorPolicyEnvelope
+    callbackUrl: str
+
+
+class JobStartResponse(TypedDict):
+    jobId: str
+    status: ExternalExecutorJobStatus
+    acceptedAt: str
+
+
+class ExternalExecutorUsageEvent(TypedDict, total=False):
+    metric: str
+    amount: float
+    unit: str
+    window: str
+
+
+class ExternalExecutorActionEvent(TypedDict, total=False):
+    eventId: str
+    sequence: int
+    jobId: str
+    eventType: ExternalExecutorEventType
+    occurredAt: str
+    actionType: ExternalExecutorActionType
+    status: ExternalExecutorJobStatus
+    executorAccountId: str
+    targetRef: str
+    quantity: int
+    completedCount: int
+    totalCount: int
+    errorCode: str
+    errorMessage: str
+    usage: ExternalExecutorUsageEvent
+    metadata: dict[str, object]
+
+
+class ExternalModuleManifest(TypedDict, total=False):
+    moduleId: str
+    platform: ExternalExecutorPlatform
+    contractVersions: list[str]
+    features: list[str]
+    capabilities: list[ExternalExecutorActionType]
+    inputSchemas: dict[str, ExternalExecutorInputSchema]
+    workflowTypes: list[str]
+    supportsPolling: bool
+    supportsCallbacks: bool
+
+
+class ExternalExecutorCallbackEnvelope(TypedDict):
+    contractVersion: str
+    moduleId: str
+    event: ExternalExecutorActionEvent
+
+
+class JobProgressResponse(TypedDict, total=False):
+    jobId: str
+    status: ExternalExecutorJobStatus
+    completedCount: int
+    totalCount: int
+    nextRunAt: str
+    assignedAccountIds: list[str]
+    errorCode: str
+    errorMessage: str
+    result: dict[str, object]
+    accountHealth: dict[str, object]
+    eventSequence: int
+    events: list[ExternalExecutorActionEvent]
+
+
+__all__ = [
+    'CONTRACT_VERSIONS',
+    'MODULE_FEATURES',
+    'PLATFORMS',
+    'JOB_STATUSES',
+    'EVENT_TYPES',
+    'INSTAGRAM_ACTION_TYPES',
+    'WORKFLOW_TYPES',
+    'INSTAGRAM_IMPLEMENTED_CAPABILITIES',
+    'ExternalExecutorPlatform',
+    'ExternalExecutorActionType',
+    'RegisteredExternalExecutorPlatform',
+    'ExternalExecutorJobStatus',
+    'ExternalExecutorEventType',
+    'InstagramExecutorActionType',
+    'ExternalExecutorInputFieldSchema',
+    'ExternalExecutorInputSchema',
+    'ExternalExecutorAccountConstraints',
+    'ExternalExecutorAccountSelector',
+    'InstagramExecutorCookie',
+    'InstagramExecutorAccountImportRequest',
+    'InstagramExecutorAccountImportResponse',
+    'ExternalExecutorAccountProxyUpdateRequest',
+    'ExternalExecutorAccountProxyUpdateResponse',
+    'ExternalExecutorPolicyEnvelope',
+    'JobStartRequest',
+    'JobStartResponse',
+    'JobProgressResponse',
+    'ExternalExecutorUsageEvent',
+    'ExternalExecutorActionEvent',
+    'ExternalModuleManifest',
+    'ExternalExecutorCallbackEnvelope',
+]
+`;
+
+fs.writeFileSync(bundledSchemaPath, `${JSON.stringify(schema, null, 2)}\n`);
+fs.mkdirSync(path.dirname(outputPath), { recursive: true });
+fs.writeFileSync(outputPath, output);

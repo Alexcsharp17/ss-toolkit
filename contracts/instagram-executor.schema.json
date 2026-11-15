@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sspanel.dev/contracts/instagram-executor/1.1/schema.json",
+  "title": "SS-panel Instagram executor extension",
+  "description": "Instagram platform identifiers, capabilities, workflows, and account import shapes.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["platforms", "instagramActionTypes", "workflowTypes", "instagramImplementedCapabilities"],
+  "properties": {
+    "platforms": {
+      "type": "array",
+      "items": { "type": "string", "enum": ["instagram"] },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "instagramActionTypes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "instagram.account.health",
+          "instagram.profile.get",
+          "instagram.media.upload.photo",
+          "instagram.media.upload.video",
+          "instagram.media.upload.reel",
+          "instagram.media.like",
+          "instagram.story.upload",
+          "instagram.comments.list",
+          "instagram.warmup",
+          "instagram.comments.reply",
+          "instagram.comments.smart_reply",
+          "instagram.comments.delete",
+          "instagram.comments.pin",
+          "instagram.dm.inbox",
+          "instagram.dm.send",
+          "instagram.dm.reply",
+          "instagram.insights.basic"
+        ]
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    },
+    "workflowTypes": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": ["instagram.comments.smart_reply", "instagram.warmup"]
+      },
+      "minItems": 0,
+      "uniqueItems": true
+    },
+    "instagramImplementedCapabilities": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "enum": [
+          "instagram.account.health",
+          "instagram.profile.get",
+          "instagram.comments.list",
+          "instagram.warmup",
+          "instagram.comments.reply",
+          "instagram.comments.smart_reply",
+          "instagram.comments.delete",
+          "instagram.comments.pin",
+          "instagram.media.upload.photo",
+          "instagram.media.upload.video",
+          "instagram.media.upload.reel",
+          "instagram.media.like",
+          "instagram.story.upload",
+          "instagram.dm.inbox",
+          "instagram.dm.send",
+          "instagram.dm.reply",
+          "instagram.insights.basic"
+        ]
+      },
+      "minItems": 1,
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "instagramExecutorCookie": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "value"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1 },
+        "value": { "type": "string" },
+        "domain": { "type": "string" },
+        "path": { "type": "string" },
+        "secure": { "type": "boolean" },
+        "httpOnly": { "type": "boolean" },
+        "expires": { "type": "number" }
+      }
+    },
+    "instagramExecutorAccountImportRequest": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "username": { "type": "string", "minLength": 1 },
+        "password": { "type": "string", "minLength": 1 },
+        "twoFactorSecret": { "type": "string", "minLength": 16 },
+        "sessionid": { "type": "string", "minLength": 31 },
+        "cookies": {
+          "type": "array",
+          "items": { "$ref": "#/$defs/instagramExecutorCookie" },
+          "minItems": 1
+        },
+        "settings": { "type": "object", "additionalProperties": true },
+        "proxy": { "type": "string", "minLength": 1 }
+      },
+      "anyOf": [
+        { "required": ["sessionid"] },
+        { "required": ["cookies"] },
+        { "required": ["settings"] },
+        { "required": ["username", "password"] }
+      ]
+    },
+    "instagramExecutorAccountImportResponse": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["executorAccountId", "status"],
+      "properties": {
+        "executorAccountId": { "type": "string", "minLength": 1 },
+        "status": { "type": "string", "minLength": 1 },
+        "username": { "type": "string" },
+        "displayName": { "type": "string" },
+        "authenticationMethod": { "type": "string", "enum": ["session", "credentials", "stored"] }
+      }
+    }
+  }
+}

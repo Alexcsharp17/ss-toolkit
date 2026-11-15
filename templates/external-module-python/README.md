@@ -10,6 +10,8 @@ The starter provides:
 - scoped API-key authentication for manifest and jobs;
 - manifest and capability advertisement;
 - SQLite-backed job/idempotency storage;
+- durable queued/cancelled lifecycle state;
+- canonical optional `policyEnvelope` and `callbackUrl` request fields;
 - stable job IDs for repeated starts;
 - a reusable conformance test entry point;
 - no SS-panel `Order`, Prisma, prompt, or credential dependency.
